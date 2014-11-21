@@ -5,8 +5,8 @@
 #include <QMediaPlaylist>
 
 PlaylistModel::PlaylistModel(QObject *parent)
-    : QAbstractItemModel(parent)
-      , m_playlist(0){}
+    : QAbstractTableModel(parent), m_playlist(0){
+}
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
     return m_playlist && !parent.isValid() ? m_playlist->mediaCount() : 0;
@@ -43,6 +43,50 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+// tablemodel specifics
+QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    if (orientation == Qt::Horizontal) {
+        switch (section) {
+            case 0:
+                return tr("Name");
+            case 1:
+                return tr("Artist");
+            case 2:
+                return tr("Album");
+            default:
+                return QVariant();
+        }
+    }
+    return QVariant();
+}
+
+Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
+    if (!index.isValid()) {
+        return Qt::ItemIsEnabled;
+    }
+
+    return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+}
+
+bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    //if (index.isValid() && role == Qt::EditRole) {
+      //  int row = index.row();
+    return false;
+}
+
+/*
+bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    Q_UNUSED(role);
+    m_data[index] = value;
+    emit dataChanged(index, index);
+    return true;
+}
+*/
+
 QMediaPlaylist *PlaylistModel::playlist() const {
     return m_playlist;
 }
@@ -70,12 +114,6 @@ void PlaylistModel::setPlaylist(QMediaPlaylist *playlist) {
     endResetModel();
 }
 
-bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    Q_UNUSED(role);
-    m_data[index] = value;
-    emit dataChanged(index, index);
-    return true;
-}
 
 void PlaylistModel::beginInsertItems(int start, int end) {
     m_data.clear();

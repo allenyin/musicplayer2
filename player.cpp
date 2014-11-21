@@ -19,7 +19,8 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     playlistModel->setPlaylist(playlist);
 
     // need to figure the correct column playlist view
-    playlistView = new QListView(this);
+    //playlistView = new QListView(this);
+    playlistView = new QTableView(this);
     playlistView->setModel(playlistModel);
     playlistView->setCurrentIndex(playlistModel->index(playlist->currentIndex(),0));
 
