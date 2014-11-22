@@ -1,49 +1,69 @@
 #include "playlistmodel.h"
-
+#include <sstream>
+#include <iomanip>
 #include <QFileInfo>
 #include <QUrl>
 #include <QMediaPlaylist>
 
-PlaylistModel::PlaylistModel(QObject *parent)
-    : QAbstractTableModel(parent), m_playlist(0){
+PlaylistModel::PlaylistModel(QObject *parent) 
+    : QAbstractTableModel(parent), m_playlist(NULL) {
+    columns = 4;
 }
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
-    return m_playlist && !parent.isValid() ? m_playlist->mediaCount() : 0;
+    return (m_playlist && !parent.isValid()) ? m_playlist->mediaCount() : 0;
 }
 
 int PlaylistModel::columnCount(const QModelIndex &parent) const {
-    return !parent.isValid() ? ColumnCount : 0;
+    return (!parent.isValid()) ? columns : 0;
 }
 
-QModelIndex PlaylistModel::index(int row, int column, const QModelIndex &parent) const {
-    return m_playlist && !parent.isValid()
-        && row >= 0 && row < m_playlist->mediaCount()
-        && column >= 0 && column < ColumnCount
-        ? createIndex(row, column)
-        : QModelIndex();
+/*
+QModelIndex PlaylistModel::index(int row, int Column, const QModelIndex &parent) const {
+    return (m_playlist && !parent.isValid()
+            && row >= 0 && row < m_playlist->mediaCount()
+            && column >= 0 && column < ColumnCount) ?
+            createIndex(row, Column) : QModelIndex();
 }
 
-QModelIndex PlaylistModel::parent(const QModelIndex &child) const {
+QModelIndex parent(const QModelIndex &child) const {
     Q_UNUSED(child);
 
     return QModelIndex();
 }
+*/
 
 QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
-    if (index.isValid() && role == Qt::DisplayRole) {
-        QVariant value = m_data[index];
-        if (!value.isValid() && index.column() == Title) {
-            QUrl location = m_playlist->media(index.row()).canonicalUrl();
-            return QFileInfo(location.path()).fileName();
-        }
+    if (!index.isValid()) {
+        return QVariant();
+    }
 
-        return value;
+    if (index.row() >= m_playlist->mediaCount() || index.row() < 0) {
+        return QVariant();
+    }
+
+    if (role == Qt::DisplayRole) {
+        const QHash<QString, QString> h = m_data.at(index.row());
+        switch(index.column()) {
+            case 0:
+                // title
+                return h["Title"];
+            case 1:
+                // artist
+                return h["Artist"];
+            case 2:
+                // album
+                return h["Album"];
+            case 3:
+                // length
+                return h["Length"];
+            default:
+               return QVariant();
+        } 
     }
     return QVariant();
 }
 
-// tablemodel specifics
 QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role != Qt::DisplayRole) {
         return QVariant();
@@ -52,7 +72,7 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
     if (orientation == Qt::Horizontal) {
         switch (section) {
             case 0:
-                return tr("Name");
+                return tr("Title");
             case 1:
                 return tr("Artist");
             case 2:
@@ -73,19 +93,31 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 }
 
 bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    //if (index.isValid() && role == Qt::EditRole) {
-      //  int row = index.row();
+    if (index.isValid() && role == Qt::EditRole) {
+        int row = index.row();
+        QHash<QString, QString> h = m_data.value(row);
+        switch(index.column()) {
+        case 0:
+            // title
+            h["Title"] = value.toString();
+        case 1:
+            // artist
+            h["Artist"] = value.toString();
+        case 2:
+            // album
+            h["Album"] = value.toString();
+        case 3:
+            // length
+            return false;
+        default:
+           return false; 
+        } 
+        m_data.replace(row, h);
+        emit(dataChanged(index, index));
+        return true;
+    }
     return false;
 }
-
-/*
-bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    Q_UNUSED(role);
-    m_data[index] = value;
-    emit dataChanged(index, index);
-    return true;
-}
-*/
 
 QMediaPlaylist *PlaylistModel::playlist() const {
     return m_playlist;
@@ -114,19 +146,37 @@ void PlaylistModel::setPlaylist(QMediaPlaylist *playlist) {
     endResetModel();
 }
 
-
 void PlaylistModel::beginInsertItems(int start, int end) {
-    m_data.clear();
     beginInsertRows(QModelIndex(), start, end);
+    for (int row=start; row < end+1; row++) {
+        QHash<QString, QString> hash;
+        hash["fileName"] = QString("");
+        hash["Title"] = QString("");
+        hash["Artist"] = QString("");
+        hash["Album"] = QString("");
+        hash["Length"] = QString("");
+    }
+    insert_start = start;
+    insert_end = end;
 }
 
 void PlaylistModel::endInsertItems() {
+    for (int row=insert_start; row<insert_end+1; row++) {
+        QUrl location = m_playlist->media(row).canonicalUrl();
+        QString path = location.path();
+        QHash<QString, QString> hash;
+        m_data.insert(row, hash);
+        m_data[row]["fileName"] = QFileInfo(path).fileName();
+        get_metaData(row, path);
+    }
     endInsertRows();
 }
 
 void PlaylistModel::beginRemoveItems(int start, int end) {
-    m_data.clear();
     beginRemoveRows(QModelIndex(), start, end);
+    for (int row=0; row < end+1; row++) {
+       m_data.removeAt(row);
+    } 
 }
 
 void PlaylistModel::endRemoveItems() {
@@ -134,6 +184,27 @@ void PlaylistModel::endRemoveItems() {
 }
 
 void PlaylistModel::changeItems(int start, int end) {
-    m_data.clear();
-    emit dataChanged(index(start,0), index(end,ColumnCount));
+    emit dataChanged(index(start,0), index(end,columns));
 }
+
+void PlaylistModel::get_metaData(int row, QString path) {
+    QByteArray byteArray = path.toUtf8();
+    const char* cString = byteArray.constData();
+    TagLib::FileRef f(cString);
+    if (!f.isNull() && f.tag()) {
+        TagLib::Tag *tag = f.tag();
+        m_data[row]["Title"] = QString::fromStdString(tag->title().toCString(true));
+        m_data[row]["Artist"] = QString::fromStdString(tag->artist().toCString(true));
+        m_data[row]["Album"] = QString::fromStdString(tag->album().toCString(true));
+    }
+    if (!f.isNull() && f.audioProperties()) {
+        TagLib::AudioProperties *properties = f.audioProperties();
+        int seconds = properties->length() % 60;
+        int minutes = (properties->length() - seconds)/60;
+        std::stringstream ss;
+        ss << minutes << ":" << std::setfill('0')<<std::setw(2)<<seconds;
+        QString l = QString::fromStdString(ss.str());
+        m_data[row]["Length"] = l;
+    }
+}
+

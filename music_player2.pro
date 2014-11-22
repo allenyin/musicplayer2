@@ -9,6 +9,7 @@ QT += xml\
       multimedia \
       multimediawidgets \
       widgets
+LIBS += -ltag
 
 # Input
 HEADERS += player.h playercontrols.h playlistmodel.h
