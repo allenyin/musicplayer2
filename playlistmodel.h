@@ -13,6 +13,7 @@ public:
     int columns;
     // constructor
     PlaylistModel(QObject *parent = 0);
+    ~PlaylistModel();
     
     // compulsory inherited methods
     int rowCount(const QModelIndex &parent = QModelIndex()) const;

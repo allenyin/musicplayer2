@@ -11,6 +11,9 @@ PlaylistModel::PlaylistModel(QObject *parent)
     connect(this, SIGNAL(dataChanged(QModelIndex, QModelIndex)), SLOT(changeMetaData(QModelIndex)));
 }
 
+PlaylistModel::~PlaylistModel() {
+}
+
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
     return (m_playlist && !parent.isValid()) ? m_playlist->mediaCount() : 0;
 }
@@ -103,7 +106,6 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
 bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if (index.isValid() && role == Qt::EditRole) {
         int row = index.row();
-        QHash<QString, QString> h = m_data.value(row);
         switch(index.column()) {
         case 0:
             // title

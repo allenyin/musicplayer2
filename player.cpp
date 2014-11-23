@@ -16,7 +16,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     //-----------playlist model-view setup------------
     playlist = new QMediaPlaylist();
     player->setPlaylist(playlist);
-    
+
     playlistModel = new PlaylistModel(this);
     playlistModel->setPlaylist(playlist);
 
@@ -29,90 +29,98 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
         playlistView->horizontalHeader()->setSectionResizeMode(c, QHeaderView::Stretch);
     }
 
-    // connect playlist signals to the player slots.
-    connect(playlistView, SIGNAL(activated(QModelIndex)), this, SLOT(jump(QModelIndex)));
-    connect(playlist, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
+        // connect playlist signals to the player slots.
+        connect(playlistView, SIGNAL(activated(QModelIndex)), this, SLOT(jump(QModelIndex)));
+        connect(playlist, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
 
-    //------------Playback UI setup------------
-    slider = new QSlider(Qt::Horizontal, this);
-    slider->setRange(0, player->duration()/1000);
+        //------------Playback UI setup------------
+        slider = new QSlider(Qt::Horizontal, this);
+        slider->setRange(0, player->duration()/1000);
 
-    labelDuration = new QLabel(this);
-    connect(slider, SIGNAL(sliderMoved(int)), this, SLOT(seek(int)));
+        labelDuration = new QLabel(this);
+        connect(slider, SIGNAL(sliderMoved(int)), this, SLOT(seek(int)));
 
-    QPushButton *openButton = new QPushButton(tr("Open"), this);
-    connect(openButton, SIGNAL(clicked()), this, SLOT(open()));
+        QPushButton *openButton = new QPushButton(tr("Open"), this);
+        connect(openButton, SIGNAL(clicked()), this, SLOT(open()));
 
-    PlayerControls *controls = new PlayerControls(this);
-    controls->setState(player->state());
-    controls->setVolume(player->volume());
-    controls->setMuted(controls->isMuted());
+        PlayerControls *controls = new PlayerControls(this);
+        controls->setState(player->state());
+        controls->setVolume(player->volume());
+        controls->setMuted(controls->isMuted());
 
-    connect(controls, SIGNAL(play()), player, SLOT(play()));
-    connect(controls, SIGNAL(pause()), player, SLOT(pause()));
-    connect(controls, SIGNAL(stop()), player, SLOT(stop()));
-    connect(controls, SIGNAL(next()), playlist, SLOT(next()));
-    connect(controls, SIGNAL(previous()), this, SLOT(previousClicked()));
-    connect(controls, SIGNAL(changeVolume(int)), player, SLOT(setVolume(int)));
-    connect(player, SIGNAL(volumeChanged(int)), controls, SLOT(setVolume(int)));
-    connect(controls, SIGNAL(changeMuting(bool)), player, SLOT(setMuted(bool)));
-    connect(player, SIGNAL(mutedChanged(bool)), controls, SLOT(setMuted(bool)));
-    connect(controls, SIGNAL(changeRate(qreal)), player, SLOT(setPlaybackRate(qreal)));
-    connect(player, SIGNAL(stateChanged(QMediaPlayer::State)),
-            controls, SLOT(setState(QMediaPlayer::State)));
+        connect(controls, SIGNAL(play()), player, SLOT(play()));
+        connect(controls, SIGNAL(pause()), player, SLOT(pause()));
+        connect(controls, SIGNAL(stop()), player, SLOT(stop()));
+        connect(controls, SIGNAL(next()), playlist, SLOT(next()));
+        connect(controls, SIGNAL(previous()), this, SLOT(previousClicked()));
+        connect(controls, SIGNAL(changeVolume(int)), player, SLOT(setVolume(int)));
+        connect(player, SIGNAL(volumeChanged(int)), controls, SLOT(setVolume(int)));
+        connect(controls, SIGNAL(changeMuting(bool)), player, SLOT(setMuted(bool)));
+        connect(player, SIGNAL(mutedChanged(bool)), controls, SLOT(setMuted(bool)));
+        connect(controls, SIGNAL(changeRate(qreal)), player, SLOT(setPlaybackRate(qreal)));
+        connect(player, SIGNAL(stateChanged(QMediaPlayer::State)),
+                controls, SLOT(setState(QMediaPlayer::State)));
 
-    //--------------player media signals connection--------
-    connect(player, SIGNAL(durationChanged(qint64)), SLOT(durationChanged(qint64)));
-    connect(player, SIGNAL(positionChanged(qint64)), SLOT(positionChanged(qint64)));
-    connect(player, SIGNAL(metaDataChanged()), SLOT(metaDataChanged()));
-    connect(player, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
-            this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
-    connect(player, SIGNAL(bufferStatusChanged(int)), this, SLOT(bufferingProgress(int)));
-    connect(player, SIGNAL(audioAvailableChanged(bool)), this, SLOT(audioAvailableChanged(bool)));
-    connect(player, SIGNAL(error(QMediaPlayer::Error)), this, SLOT(displayErrorMessage()));
+        //--------------player media signals connection--------
+        connect(player, SIGNAL(durationChanged(qint64)), SLOT(durationChanged(qint64)));
+        connect(player, SIGNAL(positionChanged(qint64)), SLOT(positionChanged(qint64)));
+        connect(player, SIGNAL(metaDataChanged()), SLOT(metaDataChanged()));
+        connect(player, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
+                this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
+        connect(player, SIGNAL(bufferStatusChanged(int)), this, SLOT(bufferingProgress(int)));
+        connect(player, SIGNAL(audioAvailableChanged(bool)), this, SLOT(audioAvailableChanged(bool)));
+        connect(player, SIGNAL(error(QMediaPlayer::Error)), this, SLOT(displayErrorMessage()));
 
-    //----------------- UI Layout ------------------
-    QBoxLayout *displayLayout = new QHBoxLayout;
-    displayLayout->addWidget(playlistView);
+        //----------------- UI Layout ------------------
+        QBoxLayout *displayLayout = new QHBoxLayout;
+        displayLayout->addWidget(playlistView);
 
-    QBoxLayout *controlLayout = new QHBoxLayout;
-    controlLayout->setMargin(0);
-    controlLayout->addWidget(openButton);
-    controlLayout->addStretch(1);
-    controlLayout->addWidget(controls);
-    controlLayout->addStretch(1);
+        QBoxLayout *controlLayout = new QHBoxLayout;
+        controlLayout->setMargin(0);
+        controlLayout->addWidget(openButton);
+        controlLayout->addStretch(1);
+        controlLayout->addWidget(controls);
+        controlLayout->addStretch(1);
 
-    QBoxLayout *layout = new QVBoxLayout;
-    layout->addLayout(displayLayout);
-    
-    QHBoxLayout *hLayout = new QHBoxLayout;
-    hLayout->addWidget(slider);
-    hLayout->addWidget(labelDuration);
-    
-    layout->addLayout(hLayout);
-    layout->addLayout(controlLayout);
-    
-    setLayout(layout);
+        QBoxLayout *layout = new QVBoxLayout;
+        layout->addLayout(displayLayout);
 
-    //---------------- Initialization stuff ------------
-    if (!player->isAvailable()) {
-        QMessageBox::warning(this, tr("service not available"),
-                             tr("The QMediaPlayer object does not have a valid service.\n"\
-                                 "Please check the media service plugins are installed."));
-        controls->setEnabled(false);
-        playlistView->setEnabled(false);
-        openButton->setEnabled(false);
-    }
+        QHBoxLayout *hLayout = new QHBoxLayout;
+        hLayout->addWidget(slider);
+        hLayout->addWidget(labelDuration);
 
-    metaDataChanged();
-    QStringList arguments = qApp->arguments();
-    arguments.removeAt(0);
-    // can invoke player in command line with files that want to be played.
-    addToPlaylist(arguments);
+        layout->addLayout(hLayout);
+        layout->addLayout(controlLayout);
+
+        setLayout(layout);
+
+        //---------------- Initialization stuff ------------
+        if (!player->isAvailable()) {
+            QMessageBox::warning(this, tr("service not available"),
+                    tr("The QMediaPlayer object does not have a valid service.\n"\
+                        "Please check the media service plugins are installed."));
+            controls->setEnabled(false);
+            playlistView->setEnabled(false);
+            openButton->setEnabled(false);
+        }
+
+        metaDataChanged();
+        QStringList arguments = qApp->arguments();
+        arguments.removeAt(0);
+        // can invoke player in command line with files that want to be played.
+        addToPlaylist(arguments);
 }
 
 Player::~Player() {
+    delete playlistView;
+    delete playlistModel;
+    delete playlist;
+    delete labelDuration;
+    delete slider;
+    delete coverLabel;
+    delete player;
 }
+
 
 //--------------------Slots---------------------
 void Player::open() {
