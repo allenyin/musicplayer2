@@ -221,5 +221,44 @@ void PlaylistModel::get_metaData(int row, QString path) {
 }
 
 void PlaylistModel::changeMetaData(QModelIndex index) {
-
+    int row = index.row();
+    int col = index.column();
+    // get path of the associated file
+    QUrl location = m_playlist->media(row).canonicalUrl();
+    QString path = location.path();
+    QByteArray byteArray = path.toUtf8();
+    const char* cString = byteArray.constData();
+    
+    TagLib::FileRef f(cString);
+    if (!f.isNull() && f.tag()) {
+        switch (col) {
+            case 0: {
+                // change title
+                TagLib::String title = TagLib::String(m_data[row]["Title"].toUtf8().constData());
+                f.tag()->setTitle(title);
+                f.file()->save();
+                break;
+                    }
+            case 1: {
+                // change artist
+                TagLib::String artist = TagLib::String(m_data[row]["Artist"].toUtf8().constData());
+                f.tag()->setArtist(artist);
+                f.file()->save();
+                break;
+                    }
+            case 2: {
+                // change album
+                TagLib::String album = TagLib::String(m_data[row]["Album"].toUtf8().constData());
+                f.tag()->setAlbum(album);
+                f.file()->save();
+                break;
+                    }
+            default:
+                break;
+        }
+    }
+    return;
 }
+
+
+
