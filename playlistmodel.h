@@ -17,8 +17,8 @@ public:
     // compulsory inherited methods
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    //QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    //QModelIndex parent(const QModelIndex &child) const;
+    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    QModelIndex parent(const QModelIndex &child) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     QVariant headerData(int section, Qt::Orientation Orientation, int role) const;
     Qt::ItemFlags flags(const QModelIndex &index) const;
@@ -34,6 +34,7 @@ private slots:
     void beginRemoveItems(int start, int end);
     void endRemoveItems();
     void changeItems(int start, int end);
+    void changeMetaData(QModelIndex index);
    
 private:
     QMediaPlaylist *m_playlist;

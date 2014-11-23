@@ -8,6 +8,7 @@
 PlaylistModel::PlaylistModel(QObject *parent) 
     : QAbstractTableModel(parent), m_playlist(NULL) {
     columns = 4;
+    connect(this, SIGNAL(dataChanged(QModelIndex, QModelIndex)), SLOT(changeMetaData(QModelIndex)));
 }
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
@@ -18,20 +19,18 @@ int PlaylistModel::columnCount(const QModelIndex &parent) const {
     return (!parent.isValid()) ? columns : 0;
 }
 
-/*
-QModelIndex PlaylistModel::index(int row, int Column, const QModelIndex &parent) const {
+QModelIndex PlaylistModel::index(int row, int column, const QModelIndex &parent) const {
     return (m_playlist && !parent.isValid()
             && row >= 0 && row < m_playlist->mediaCount()
-            && column >= 0 && column < ColumnCount) ?
-            createIndex(row, Column) : QModelIndex();
+            && column >= 0 && column < columns) ?
+            createIndex(row, column) : QModelIndex();
 }
 
-QModelIndex parent(const QModelIndex &child) const {
+QModelIndex PlaylistModel::parent(const QModelIndex &child) const {
     Q_UNUSED(child);
 
     return QModelIndex();
 }
-*/
 
 QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) {
@@ -77,6 +76,8 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
                 return tr("Artist");
             case 2:
                 return tr("Album");
+            case 3:
+                return tr("Length");
             default:
                 return QVariant();
         }
@@ -89,7 +90,14 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
         return Qt::ItemIsEnabled;
     }
 
-    return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+    if (index.column() == 3) {
+        // clicking on length doesn't do anything
+        return QAbstractTableModel::flags(index);
+    }
+
+    else {
+        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+    }
 }
 
 bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -99,21 +107,22 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
         switch(index.column()) {
         case 0:
             // title
-            h["Title"] = value.toString();
+            m_data[row]["Title"] = value.toString();
+            emit(QAbstractItemModel::dataChanged(index, index));
+            break;
         case 1:
             // artist
-            h["Artist"] = value.toString();
+            m_data[row]["Artist"] = value.toString();
+            emit(QAbstractItemModel::dataChanged(index, index));
+            break;
         case 2:
             // album
-            h["Album"] = value.toString();
-        case 3:
-            // length
-            return false;
+            m_data[row]["Album"] = value.toString();
+            emit(QAbstractItemModel::dataChanged(index, index));
+            break;
         default:
-           return false; 
+            break; 
         } 
-        m_data.replace(row, h);
-        emit(dataChanged(index, index));
         return true;
     }
     return false;
@@ -193,9 +202,12 @@ void PlaylistModel::get_metaData(int row, QString path) {
     TagLib::FileRef f(cString);
     if (!f.isNull() && f.tag()) {
         TagLib::Tag *tag = f.tag();
-        m_data[row]["Title"] = QString::fromStdString(tag->title().toCString(true));
-        m_data[row]["Artist"] = QString::fromStdString(tag->artist().toCString(true));
-        m_data[row]["Album"] = QString::fromStdString(tag->album().toCString(true));
+        QString title = QString::fromStdString(tag->title().toCString(true));
+        QString artist = QString::fromStdString(tag->artist().toCString(true));
+        QString album = QString::fromStdString(tag->album().toCString(true));
+        m_data[row]["Title"] = title.isEmpty() ? m_data[row]["fileName"] : title;
+        m_data[row]["Artist"] = artist.isEmpty() ? QString("Unknown") : artist;
+        m_data[row]["Album"] = album.isEmpty() ? QString("Unknown") : album;
     }
     if (!f.isNull() && f.audioProperties()) {
         TagLib::AudioProperties *properties = f.audioProperties();
@@ -208,3 +220,6 @@ void PlaylistModel::get_metaData(int row, QString path) {
     }
 }
 
+void PlaylistModel::changeMetaData(QModelIndex index) {
+
+}

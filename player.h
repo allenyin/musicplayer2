@@ -13,6 +13,7 @@ class QSlider;
 class QAudioProbe;
 
 class PlaylistModel;
+class PlaylistTable;
 
 class Player : public QWidget {
     Q_OBJECT
@@ -67,7 +68,7 @@ private:
     QSlider *slider;
     QLabel *labelDuration;
     PlaylistModel *playlistModel;
-    QAbstractItemView *playlistView;
+    PlaylistTable *playlistView;
     QString trackInfo;
     QString statusInfo;
     qint64 duration;

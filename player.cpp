@@ -1,12 +1,14 @@
 #include "player.h"
 #include "playlistmodel.h"
 #include "playercontrols.h"
+#include "playlistTable.h"
 
 #include <QMediaService>
 #include <QMediaPlaylist>
 #include <QAudioProbe>
 #include <QMediaMetaData>
 #include <QtWidgets>
+#include <QHeaderView>
 
 Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     player = new QMediaPlayer(this);
@@ -19,10 +21,13 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     playlistModel->setPlaylist(playlist);
 
     // need to figure the correct column playlist view
-    //playlistView = new QListView(this);
-    playlistView = new QTableView(this);
+    playlistView = new PlaylistTable(this);
     playlistView->setModel(playlistModel);
     playlistView->setCurrentIndex(playlistModel->index(playlist->currentIndex(),0));
+    playlistView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    for (int c=1; c < playlistModel->columns; c++) {
+        playlistView->horizontalHeader()->setSectionResizeMode(c, QHeaderView::Stretch);
+    }
 
     // connect playlist signals to the player slots.
     connect(playlistView, SIGNAL(activated(QModelIndex)), this, SLOT(jump(QModelIndex)));
