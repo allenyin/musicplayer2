@@ -4,6 +4,9 @@
 #include <QFileInfo>
 #include <QUrl>
 #include <QMediaPlaylist>
+#include <QColor>
+#include <QBrush>
+#include <QMimeData>
 
 PlaylistModel::PlaylistModel(QObject *parent) 
     : QAbstractTableModel(parent), m_playlist(NULL) {
@@ -63,6 +66,27 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
                return QVariant();
         } 
     }
+
+    if (role == Qt::EditRole) {
+        const QHash<QString, QString> h = m_data.at(index.row());
+        switch(index.column()) {
+            case 0:
+                // title
+                return h["Title"];
+            case 1:
+                // artist
+                return h["Artist"];
+            case 2:
+                // album
+                return h["Album"];
+            case 3:
+                // length
+                return h["Length"];
+            default:
+               return QVariant();
+        } 
+    }
+
     return QVariant();
 }
 
@@ -90,16 +114,17 @@ QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int
 
 Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
     if (!index.isValid()) {
-        return Qt::ItemIsEnabled;
+        return Qt::ItemIsEnabled | Qt::ItemIsDropEnabled;
     }
 
     if (index.column() == 3) {
         // clicking on length doesn't do anything
-        return QAbstractTableModel::flags(index);
+        return QAbstractTableModel::flags(index) | Qt::ItemIsDropEnabled | Qt::ItemIsDragEnabled;
     }
 
     else {
-        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable | Qt::ItemIsDropEnabled | Qt::ItemIsDragEnabled;
+
     }
 }
 
@@ -130,8 +155,89 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
     return false;
 }
 
+
+Qt::DropActions PlaylistModel::supportedDropActions() const {
+    return Qt::CopyAction | Qt::MoveAction;
+}
+
+QStringList PlaylistModel::mimetypes() const {
+    QStringList types;
+    types << "playlistItem";
+    return types;
+}
+
+QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    QModelIndex index = indexes[0];
+    int row = -1;
+    
+    foreach(index, indexes) {
+        if (index.isValid()) {
+            qDebug()<< "row for index is: " << row;
+            if (index.row() != row) {
+                row = index.row();
+                stream << row;
+            }
+        }
+    }
+    mimeData->setData("playlistItem", encodedData);
+    qDebug()<< "Called mimeData with indexes=" << indexes;
+    return mimeData;
+}
+
+void PlaylistModel::swapSong(int to, int from) {
+    // swap songs with playlist row indicated by the arguments.
+    disconnect_playlist();
+    if (from >= 0 && from < m_playlist->mediaCount()) {
+        // remove media from playlist
+        m_playlist->removeMedia(from);
+    }
+    // then we swap the entry in m_data, then add it back to playlist
+    qDebug() << "m_data item to move: " << m_data[from];
+    if (to == -1) {
+        m_data.move(from, m_data.size()-1);
+    }
+    else {
+        m_data.move(from, to);
+    }
+    addDataToPlaylist(to);
+
+    reconnect_playlist();
+}
+
+void PlaylistModel::addDataToPlaylist(int row) {
+    // given the row of a media inside m_data, add the media item
+    // into the m_playlist.
+    qDebug() << "playlist is right now: " << m_playlist;
+    qDebug() << "absoulteFilePath: " << m_data[row]["absFilePath"];
+    QUrl url = QUrl::fromLocalFile(m_data[row]["absFilePath"]);
+    qDebug() << "new url is: " << url;
+    bool result = m_playlist->insertMedia(row, url);
+    qDebug() << "insert result: " << result;
+}
+
 QMediaPlaylist *PlaylistModel::playlist() const {
     return m_playlist;
+}
+
+void PlaylistModel::disconnect_playlist() {
+    disconnect(m_playlist, SIGNAL(mediaAboutToBeInserted(int,int)), this, SLOT(beginInsertItems(int,int)));
+    disconnect(m_playlist, SIGNAL(mediaInserted(int,int)), this, SLOT(endInsertItems()));
+    disconnect(m_playlist, SIGNAL(mediaAboutToBeRemoved(int,int)), this, SLOT(beginRemoveItems(int,int)));
+    disconnect(m_playlist, SIGNAL(mediaRemoved(int,int)), this, SLOT(endRemoveItems()));
+    disconnect(m_playlist, SIGNAL(mediaChanged(int,int)), this, SLOT(changeItems(int,int)));
+}
+
+void PlaylistModel::reconnect_playlist() {
+    beginResetModel();
+    connect(m_playlist, SIGNAL(mediaAboutToBeInserted(int,int)), this, SLOT(beginInsertItems(int,int)));
+    connect(m_playlist, SIGNAL(mediaInserted(int,int)), this, SLOT(endInsertItems()));
+    connect(m_playlist, SIGNAL(mediaAboutToBeRemoved(int,int)), this, SLOT(beginRemoveItems(int,int)));
+    connect(m_playlist, SIGNAL(mediaRemoved(int,int)), this, SLOT(endRemoveItems()));
+    connect(m_playlist, SIGNAL(mediaChanged(int,int)), this, SLOT(changeItems(int,int)));
+    endResetModel();
 }
 
 void PlaylistModel::setPlaylist(QMediaPlaylist *playlist) {
@@ -177,6 +283,7 @@ void PlaylistModel::endInsertItems() {
         QString path = location.path();
         QHash<QString, QString> hash;
         m_data.insert(row, hash);
+        m_data[row]["absFilePath"] = QFileInfo(path).absoluteFilePath();
         m_data[row]["fileName"] = QFileInfo(path).fileName();
         get_metaData(row, path);
     }

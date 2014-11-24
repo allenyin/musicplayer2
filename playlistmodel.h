@@ -3,6 +3,7 @@
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 #include <taglib/tpropertymap.h>
+#include <QModelIndex>
 
 class QMediaPlaylist;
 
@@ -16,18 +17,21 @@ public:
     ~PlaylistModel();
     
     // compulsory inherited methods
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-    QModelIndex parent(const QModelIndex &child) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QVariant headerData(int section, Qt::Orientation Orientation, int role) const;
-    Qt::ItemFlags flags(const QModelIndex &index) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole);
-    //bool insertRows(int position, int rows, const QModelIndex &index=QModelIndex());
-    //bool removeRows(int position, int rows, const QModelIndex &index=QModelIndex());
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    virtual QModelIndex parent(const QModelIndex &child) const;
+    virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    virtual QVariant headerData(int section, Qt::Orientation Orientation, int role) const;
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole);
     QMediaPlaylist *playlist() const;
     void setPlaylist(QMediaPlaylist *playlist);
+    // needed for drag and drop
+    virtual Qt::DropActions supportedDropActions() const;
+    virtual QStringList mimetypes() const;
+    virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
+    void swapSong(int to, int from);
 
 private slots:
     void beginInsertItems(int start, int end);
@@ -52,5 +56,11 @@ private:
     int insert_start;
     int insert_end;
     void get_metaData(int row, QString path);
+    /* Used for drag and drop, temporary disconnect so we don't
+       invoke the get_metaData method.
+   */
+    void disconnect_playlist();
+    void reconnect_playlist();
+    void addDataToPlaylist(int row); 
 };
 

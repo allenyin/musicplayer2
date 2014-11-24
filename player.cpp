@@ -51,7 +51,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
         connect(controls, SIGNAL(play()), player, SLOT(play()));
         connect(controls, SIGNAL(pause()), player, SLOT(pause()));
         connect(controls, SIGNAL(stop()), player, SLOT(stop()));
-        connect(controls, SIGNAL(next()), playlist, SLOT(next()));
+        connect(controls, SIGNAL(next()), playlistModel->playlist(), SLOT(next()));
         connect(controls, SIGNAL(previous()), this, SLOT(previousClicked()));
         connect(controls, SIGNAL(changeVolume(int)), player, SLOT(setVolume(int)));
         connect(player, SIGNAL(volumeChanged(int)), controls, SLOT(setVolume(int)));
@@ -105,16 +105,18 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
         }
 
         metaDataChanged();
+        /*
         QStringList arguments = qApp->arguments();
         arguments.removeAt(0);
         // can invoke player in command line with files that want to be played.
         addToPlaylist(arguments);
+        */
 }
 
 Player::~Player() {
     delete playlistView;
     delete playlistModel;
-    delete playlist;
+    //delete playlist;
     delete labelDuration;
     delete slider;
     delete coverLabel;
@@ -137,6 +139,7 @@ void Player::addToPlaylist(const QStringList& fileNames) {
                 playlist->load(url);
             }
             else {
+                qDebug() << "Added url: " << url;
                 playlist->addMedia(url);
             }
         }

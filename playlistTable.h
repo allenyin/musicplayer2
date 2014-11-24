@@ -14,15 +14,15 @@ protected:
     virtual void mouseDoubleClickEvent(QMouseEvent* e);
     virtual void mouseReleaseEvent(QMouseEvent* e);
     virtual void contextMenuEvent(QContextMenuEvent *e);
+    // for drag and drop
+    virtual void dragEnterEvent(QDragEnterEvent *event);
+    virtual void dragMoveEvent(QDragMoveEvent *event);
+    virtual void dropEvent(QDropEvent *event);
 
 private:
-    bool ignoreNextRelease;
-    QTimer *timer;
-    QMouseEvent *my_event;
 
 signals:
     // None right now.
 
 public slots:
-    void emitClicked();
 };
