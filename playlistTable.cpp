@@ -15,7 +15,7 @@ PlaylistTable::PlaylistTable(QWidget* parent) : QTableView(parent) {
     setEditTriggers(QAbstractItemView::EditKeyPressed);
     // entire row is selected when any item is clicked
     setSelectionBehavior(QAbstractItemView::SelectRows);
-    setSelectionMode(QAbstractItemView::ExtendedSelection);
+    setSelectionMode(QAbstractItemView::ContiguousSelection);
     // enable drag and drop
     setDragEnabled(true);
     setAcceptDrops(true);
@@ -83,16 +83,20 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasFormat("playlistItem")) {
         // this is when we re-arrange items in the playlist
         QPoint dropPos = event->pos();
-        QModelIndex dropIdx = QTableView::indexAt(dropPos);
+        int dropRow = QTableView::indexAt(dropPos).row();
         QByteArray itemData = event->mimeData()->data("playlistItem");
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
+        QList<int> itemRowList;
         int itemRow;
-        dataStream >> itemRow;
-        qDebug() << "Decoded mimeData: " << itemRow;
-        qDebug()<<"dropIdx is " << dropIdx;
+        while (!dataStream.atEnd()) {
+            dataStream >> itemRow;
+            itemRowList << itemRow;
+            qDebug() << "Decoded mimeData: " << itemRow;
+        }
+        int offset = dropRow - itemRow;
+        qDebug()<<"dropRow is " << dropRow;
         PlaylistModel *model = dynamic_cast<PlaylistModel*>(QTableView::model());
-        model->swapSong(dropIdx.row(), itemRow);
-
+        model->swapSong(dropRow, itemRowList, offset);
         event->setDropAction(Qt::MoveAction);
         event->accept();
     }

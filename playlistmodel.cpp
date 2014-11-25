@@ -187,36 +187,56 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     return mimeData;
 }
 
-void PlaylistModel::swapSong(int to, int from) {
+void PlaylistModel::swapSong(int to, QList<int> fromlist, int offset) {
     // swap songs with playlist row indicated by the arguments.
     disconnect_playlist();
-    if (from >= 0 && from < m_playlist->mediaCount()) {
-        // remove media from playlist
-        m_playlist->removeMedia(from);
+    qDebug() << "Before swapping, playlist is: ";
+    printPlaylist();
+    if (fromlist.first() >= 0) {
+        m_playlist->removeMedia(fromlist.first(), fromlist.last());
     }
-    // then we swap the entry in m_data, then add it back to playlist
-    qDebug() << "m_data item to move: " << m_data[from];
-    if (to == -1) {
-        m_data.move(from, m_data.size()-1);
-    }
-    else {
-        m_data.move(from, to);
-    }
-    addDataToPlaylist(to);
 
+    foreach(int from, fromlist) {
+        // then we swap the entry in m_data, then add it back to playlist
+        qDebug() << "m_data item to move: " << m_data[from];
+        if (to == -1) {
+            m_data.move(from, m_data.size()-1);
+        }
+        else {
+            m_data.move(from, from+offset);
+        }
+    }
+    //addDataToPlaylist(to, fromlist.size());
+    remakePlaylist();
+    qDebug() << "After swapping, playlist is: ";
+    printPlaylist();
     reconnect_playlist();
 }
 
-void PlaylistModel::addDataToPlaylist(int row) {
+void PlaylistModel::addDataToPlaylist(int row, int count) {
     // given the row of a media inside m_data, add the media item
     // into the m_playlist.
-    qDebug() << "playlist is right now: " << m_playlist;
-    qDebug() << "absoulteFilePath: " << m_data[row]["absFilePath"];
-    QUrl url = QUrl::fromLocalFile(m_data[row]["absFilePath"]);
-    qDebug() << "new url is: " << url;
-    bool result = m_playlist->insertMedia(row, url);
-    qDebug() << "insert result: " << result;
+    for (int i=0; i<count; i++) {
+        QUrl url = QUrl::fromLocalFile(m_data[row+count]["absFilePath"]);
+        bool result = m_playlist->insertMedia(row+count, url);
+    }
+    qDebug() << "playlist is now, after adding from data: ";
 }
+
+void PlaylistModel::remakePlaylist() {
+    m_playlist->clear();
+    for (int i=0; i < m_data.size(); i++) {
+        QUrl url = QUrl::fromLocalFile(m_data[i]["absFilePath"]);
+        m_playlist->addMedia(url);
+    }
+}
+
+void PlaylistModel::printPlaylist() {
+    for (int i=0; i<m_playlist->mediaCount(); i++) {
+        qDebug() << m_playlist->media(i).canonicalUrl();
+    }
+}
+
 
 QMediaPlaylist *PlaylistModel::playlist() const {
     return m_playlist;

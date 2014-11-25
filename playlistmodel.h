@@ -31,7 +31,7 @@ public:
     virtual Qt::DropActions supportedDropActions() const;
     virtual QStringList mimetypes() const;
     virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
-    void swapSong(int to, int from);
+    void swapSong(int to, QList<int> fromlist, int offset);
 
 private slots:
     void beginInsertItems(int start, int end);
@@ -61,6 +61,8 @@ private:
    */
     void disconnect_playlist();
     void reconnect_playlist();
-    void addDataToPlaylist(int row); 
+    void addDataToPlaylist(int row, int count); 
+    void printPlaylist();
+    void remakePlaylist();
 };
 
