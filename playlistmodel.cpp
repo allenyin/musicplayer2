@@ -200,10 +200,17 @@ void PlaylistModel::swapSong(int to, QList<int> fromlist, int offset) {
         // then we swap the entry in m_data, then add it back to playlist
         qDebug() << "m_data item to move: " << m_data[from];
         if (to == -1) {
+            qDebug() << "move to back";
             m_data.move(from, m_data.size()-1);
         }
         else {
-            m_data.move(from, from+offset);
+            qDebug() << "move to other index, from=" << from << " offset=" << offset;
+            if (offset < 0) {
+                m_data.move(from, from+offset+1);
+            }
+            else {
+                m_data.move(from, from+offset);
+            }
         }
     }
     //addDataToPlaylist(to, fromlist.size());

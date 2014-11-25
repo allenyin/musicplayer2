@@ -87,13 +87,14 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
         QByteArray itemData = event->mimeData()->data("playlistItem");
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
         QList<int> itemRowList;
-        int itemRow;
         while (!dataStream.atEnd()) {
+            int itemRow;
             dataStream >> itemRow;
             itemRowList << itemRow;
             qDebug() << "Decoded mimeData: " << itemRow;
         }
-        int offset = dropRow - itemRow;
+        qSort(itemRowList);
+        int offset = dropRow - itemRowList.back();
         qDebug()<<"dropRow is " << dropRow;
         PlaylistModel *model = dynamic_cast<PlaylistModel*>(QTableView::model());
         model->swapSong(dropRow, itemRowList, offset);
