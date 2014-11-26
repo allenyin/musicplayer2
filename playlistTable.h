@@ -1,4 +1,5 @@
 #pragma once
+#include "debug.h"
 #include <QTableView>
 #include <QMouseEvent>
 #include <QTimer>
@@ -13,7 +14,9 @@ public:
 protected:
     virtual void mouseDoubleClickEvent(QMouseEvent* e);
     virtual void mouseReleaseEvent(QMouseEvent* e);
+#if DEBUG_PLAYLISTVIEW 
     virtual void contextMenuEvent(QContextMenuEvent *e);
+#endif
     // for drag and drop
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dragMoveEvent(QDragMoveEvent *event);

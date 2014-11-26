@@ -1,5 +1,4 @@
 #include "playlistTable.h"
-#include "tableDelegate.h"
 #include "playlistmodel.h"
 #include <stdio.h>
 #include <iostream>
@@ -31,8 +30,10 @@ PlaylistTable::~PlaylistTable() {
 void PlaylistTable::mouseDoubleClickEvent(QMouseEvent* e) {
     QPoint clickPos = e->pos();
     QModelIndex clickIdx = QTableView::indexAt(clickPos);
-    std::cout << "Double click at (" << clickPos.x() << ", " << clickPos.y() << ")\n";
-    std::cout << "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")\n";
+#if DEBUG_PLAYLISTVIEW
+    qDebug()<< "Double click at (" << clickPos.x() << ", " << clickPos.y();
+    qDebug()<< "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column();
+#endif
     emit QTableView::activated(clickIdx);
 }
 
@@ -47,18 +48,23 @@ void PlaylistTable::mouseReleaseEvent(QMouseEvent* e) {
     }
 }
 
+#if DEBUG_PLAYLISTVIEW
 void PlaylistTable::contextMenuEvent(QContextMenuEvent* e) {
     QPoint clickPos = e->pos();
     QModelIndex clickIdx = QTableView::indexAt(clickPos);
-    std::cout << "Right click at (" << clickPos.x() << ", " << clickPos.y() << ")\n";
-    std::cout << "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")\n";
+
+    qDebug() << "Right click at (" << clickPos.x() << ", " << clickPos.y() << ")";
+    qDebug() << "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")";
 }
+#endif
 
 void PlaylistTable::keyPressEvent(QKeyEvent *event) {
     // selectionMode must be contiguous
     if (event->key() == Qt::Key_Delete) {
         QModelIndexList selected = selectionModel()->selectedRows();
+#if DEBUG_PLAYLISTVIEW
         qDebug()<< "Delete key detected on" << selected;
+#endif
         PlaylistModel *model = (PlaylistModel*)(QTableView::model());
         model->removeMedia(selected.front().row(), selected.back().row());
     }
@@ -68,11 +74,17 @@ void PlaylistTable::keyPressEvent(QKeyEvent *event) {
 }
 
 void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
-    qDebug()<<"dragEnterEvent";
+//#if DEBUG_PLAYLIST
+//    qDebug()<<"dragEnterEvent";
+//#endif
+
     if (event->mimeData()->hasFormat("playlistItem")) {
+
+#if DEBUG_PLAYLISTVIEW
         QPoint dragPos = event->pos();
         QModelIndex dragIdx = QTableView::indexAt(dragPos);
         qDebug()<<"dragIdx is " << dragIdx;
+#endif
         event->accept();
     }
     else {
@@ -81,7 +93,10 @@ void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void PlaylistTable::dragMoveEvent(QDragMoveEvent *event) {
-    //qDebug()<<"dragMoveEvent";
+//#if DEBUG_PLAYLISTVIEW
+//    qDebug()<<"dragMoveEvent";
+//#endif
+
     if (event->mimeData()->hasFormat("playlistItem")) {
         event->setDropAction(Qt::MoveAction);
         event->accept();
@@ -92,7 +107,10 @@ void PlaylistTable::dragMoveEvent(QDragMoveEvent *event) {
 }
 
 void PlaylistTable::dropEvent(QDropEvent *event) {
+#if DEBUG_PLAYLISTVIEW
     qDebug()<<"dropEvent";
+#endif
+
     if (event->mimeData()->hasFormat("playlistItem")) {
         // this is when we re-arrange items in the playlist
         QPoint dropPos = event->pos();
@@ -104,11 +122,16 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
             int itemRow;
             dataStream >> itemRow;
             itemRowList << itemRow;
+
+#if DEBUG_PLAYLISTVIEW
             qDebug() << "Decoded mimeData: " << itemRow;
+#endif
         }
         qSort(itemRowList);
         int offset = dropRow - itemRowList.back();
+#if DEBUG_PLAYLISTVIEW
         qDebug()<<"dropRow is " << dropRow;
+#endif
         PlaylistModel *model = (PlaylistModel*)(QTableView::model());
         model->swapSong(dropRow, itemRowList, offset);
         event->setDropAction(Qt::MoveAction);

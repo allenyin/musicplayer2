@@ -8,6 +8,7 @@
 #include <QBrush>
 #include <QMimeData>
 
+
 PlaylistModel::PlaylistModel(QObject *parent) 
     : QAbstractTableModel(parent){
     columns = 4;
@@ -20,7 +21,6 @@ PlaylistModel::~PlaylistModel() {
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
     return (!parent.isValid()) ? m_data.size() : 0;
-    //return (m_playlist && !parent.isValid()) ? m_playlist->mediaCount() : 0;
 }
 
 int PlaylistModel::columnCount(const QModelIndex &parent) const {
@@ -178,7 +178,9 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     
     foreach(index, indexes) {
         if (index.isValid()) {
+#if DEBUG_PLAYLIST
             qDebug()<< "row for index is: " << row;
+#endif
             if (index.row() != row) {
                 row = index.row();
                 stream << row;
@@ -186,7 +188,9 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
         }
     }
     mimeData->setData("playlistItem", encodedData);
+#if DEBUG_PLAYLIST
     qDebug()<< "Called mimeData with indexes=" << indexes;
+#endif
     return mimeData;
 }
 
@@ -196,16 +200,22 @@ void PlaylistModel::swapSong(int to, QList<int> fromlist, int offset) {
     // will be the one after that song in the new position.
     foreach(int from, fromlist) {
         // then we swap the entry in m_data, then add it back to playlist
+#if DEBU_PLAYLIST
         qDebug() << "m_data item to move: " << m_data[from];
+#endif
         if (to == -1) {
+#if DEBU_PLAYLIST
             qDebug() << "move to back";
+#endif
             m_data.move(from, m_data.size()-1);
             if (curMediaIdx == from) {
                 curMediaIdx = m_data.size()-1;
             }
         }
         else {
+#if DEBUG_PLAYLIST
             qDebug() << "move to other index, from=" << from << " offset=" << offset;
+#endif
             if (offset < 0) {
                 m_data.move(from, from+offset+1);
                 if (curMediaIdx == from) {

@@ -1,4 +1,5 @@
 #pragma once
+#include "debug.h"
 #include <QAbstractTableModel>
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
