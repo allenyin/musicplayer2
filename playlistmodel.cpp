@@ -390,6 +390,3 @@ void PlaylistModel::changeMetaData(QModelIndex index) {
     }
     return;
 }
-
-
-
