@@ -54,6 +54,19 @@ void PlaylistTable::contextMenuEvent(QContextMenuEvent* e) {
     std::cout << "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")\n";
 }
 
+void PlaylistTable::keyPressEvent(QKeyEvent *event) {
+    // selectionMode must be contiguous
+    if (event->key() == Qt::Key_Delete) {
+        QModelIndexList selected = selectionModel()->selectedRows();
+        qDebug()<< "Delete key detected on" << selected;
+        PlaylistModel *model = (PlaylistModel*)(QTableView::model());
+        model->removeMedia(selected.front().row(), selected.back().row());
+    }
+    else {
+        QTableView::keyPressEvent(event);
+    }
+}
+
 void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
     qDebug()<<"dragEnterEvent";
     if (event->mimeData()->hasFormat("playlistItem")) {
@@ -96,7 +109,7 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
         qSort(itemRowList);
         int offset = dropRow - itemRowList.back();
         qDebug()<<"dropRow is " << dropRow;
-        PlaylistModel *model = dynamic_cast<PlaylistModel*>(QTableView::model());
+        PlaylistModel *model = (PlaylistModel*)(QTableView::model());
         model->swapSong(dropRow, itemRowList, offset);
         event->setDropAction(Qt::MoveAction);
         event->accept();

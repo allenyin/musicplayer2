@@ -14,16 +14,16 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     player = new QMediaPlayer(this);
 
     //-----------playlist model-view setup------------
-    playlist = new QMediaPlaylist();
-    player->setPlaylist(playlist);
+    //playlist = new QMediaPlaylist();
+    //player->setPlaylist(playlist);
 
     playlistModel = new PlaylistModel(this);
-    playlistModel->setPlaylist(playlist);
+    //playlistModel->setPlaylist(playlist);
 
     // need to figure the correct column playlist view
     playlistView = new PlaylistTable(this);
     playlistView->setModel(playlistModel);
-    playlistView->setCurrentIndex(playlistModel->index(playlist->currentIndex(),0));
+    playlistView->setCurrentIndex(playlistModel->index(playlistModel->getCurMediaIdx(),0));
     playlistView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     for (int c=1; c < playlistModel->columns; c++) {
         playlistView->horizontalHeader()->setSectionResizeMode(c, QHeaderView::Stretch);
@@ -31,7 +31,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
 
         // connect playlist signals to the player slots.
         connect(playlistView, SIGNAL(activated(QModelIndex)), this, SLOT(jump(QModelIndex)));
-        connect(playlist, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
+        connect(playlistModel, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
 
         //------------Playback UI setup------------
         slider = new QSlider(Qt::Horizontal, this);
@@ -51,7 +51,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
         connect(controls, SIGNAL(play()), player, SLOT(play()));
         connect(controls, SIGNAL(pause()), player, SLOT(pause()));
         connect(controls, SIGNAL(stop()), player, SLOT(stop()));
-        connect(controls, SIGNAL(next()), playlistModel->playlist(), SLOT(next()));
+        connect(controls, SIGNAL(next()), this, SLOT(next()));
         connect(controls, SIGNAL(previous()), this, SLOT(previousClicked()));
         connect(controls, SIGNAL(changeVolume(int)), player, SLOT(setVolume(int)));
         connect(player, SIGNAL(volumeChanged(int)), controls, SLOT(setVolume(int)));
@@ -127,29 +127,7 @@ Player::~Player() {
 //--------------------Slots---------------------
 void Player::open() {
     QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open Files"));
-    addToPlaylist(fileNames);
-}
-
-void Player::addToPlaylist(const QStringList& fileNames) {
-    foreach (QString const &argument, fileNames) {
-        QFileInfo fileInfo(argument);
-        if (fileInfo.exists()) {
-            QUrl url = QUrl::fromLocalFile(fileInfo.absoluteFilePath());
-            if (fileInfo.suffix().toLower() == QLatin1String("m3u")) {
-                playlist->load(url);
-            }
-            else {
-                qDebug() << "Added url: " << url;
-                playlist->addMedia(url);
-            }
-        }
-        else {
-            QUrl url(argument);
-            if (url.isValid()) {
-                playlist->addMedia(url);
-            }
-        }
-    }
+    playlistModel->addMedia(fileNames);
 }
 
 void Player::durationChanged(qint64 duration) {
@@ -164,32 +142,30 @@ void Player::positionChanged(qint64 progress) {
     updateDurationInfo(progress/1000);
 }
 
-void Player::metaDataChanged() {
-    if (player->isMetaDataAvailable()) {
-        setTrackInfo(QString("%1 - %2")
-                .arg(player->metaData(QMediaMetaData::AlbumArtist).toString())
-                .arg(player->metaData(QMediaMetaData::Title).toString()));
-        if (coverLabel) {
-            QUrl url = player->metaData(QMediaMetaData::CoverArtUrlLarge).value<QUrl>();
-            coverLabel->setPixmap(!url.isEmpty() ? QPixmap(url.toString()) : QPixmap());
-        }
-    }
-}
 
 void Player::previousClicked() {
     // Go to previous track if we are within the first 5 seconds of playback
     // otherwise, seek to the beginning
-    if (player->position() <= 5000)
-        playlist->previous();
-    else
+            
+    if (player->position() <= 5000) {
+        player->setMedia(playlistModel->previousMedia());
+        player->play();
+    }
+    else {
         player->setPosition(0);
+    }
 }
 
 void Player::jump(const QModelIndex &index) {
     if (index.isValid()) {
-        playlist->setCurrentIndex(index.row());
+        player->setMedia(playlistModel->setCurMedia(index.row()));
         player->play();
     }
+}
+
+void Player::next() {
+    player->setMedia(playlistModel->nextMedia());
+    player->play();
 }
 
 void Player::playlistPositionChanged(int currentItem) {
@@ -215,10 +191,12 @@ void Player::statusChanged(QMediaPlayer::MediaStatus status) {
             setStatusInfo(tr("Loading..."));
             break;
         case QMediaPlayer::StalledMedia:
+            qDebug() << "Media stalled";
             setStatusInfo(tr("Media Stalled"));
             break;
         case QMediaPlayer::EndOfMedia:
-            QApplication::alert(this);
+            player->setMedia(playlistModel->nextMedia());
+            player->play();
             break;
         case QMediaPlayer::InvalidMedia:
             displayErrorMessage();
@@ -228,7 +206,7 @@ void Player::statusChanged(QMediaPlayer::MediaStatus status) {
 
 void Player::handleCursor(QMediaPlayer::MediaStatus status) {
 #ifndef QT_NO_CURSOR
-    if (status == QMediaPlayer::LoadedMedia ||
+    if (//status == QMediaPlayer::LoadedMedia ||
         status == QMediaPlayer::BufferingMedia ||
         status == QMediaPlayer::StalledMedia)
         setCursor(QCursor(Qt::BusyCursor));
@@ -243,26 +221,39 @@ void Player::bufferingProgress(int progress) {
 
 void Player::audioAvailableChanged(bool available)
 {
+    Q_UNUSED(available);
     // Don't know what to implement yet...
     // for when audio becomes available or not
 }
 
-void Player::setTrackInfo(const QString &info)
-{
-    trackInfo = info;
-    if (!statusInfo.isEmpty())
-        setWindowTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo));
-    else
-        setWindowTitle(trackInfo);
+void Player::metaDataChanged() {
+    qDebug() << "metaDataChanged()";
+    if (player->isMetaDataAvailable()) {
+        setTrackInfo(QString("%1 - %2")
+                .arg(playlistModel->getCurAlbumArtist())
+                .arg(playlistModel->getCurTitle()));
+    }
 }
+
+void Player::setTrackInfo(const QString &info) {
+    trackInfo = info;
+    if (!statusInfo.isEmpty()) {
+        emit(changeTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo)));
+    }
+    else {
+        emit(changeTitle(trackInfo));
+    }
+}
+
+
 
 void Player::setStatusInfo(const QString &info)
 {
     statusInfo = info;
     if (!statusInfo.isEmpty())
-        setWindowTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo));
+        emit(changeTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo)));
     else
-        setWindowTitle(trackInfo);
+        emit(changeTitle(trackInfo));
 }
 
 void Player::displayErrorMessage()

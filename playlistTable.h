@@ -18,8 +18,11 @@ protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dragMoveEvent(QDragMoveEvent *event);
     virtual void dropEvent(QDropEvent *event);
+    // vor deleting items
+    virtual void keyPressEvent(QKeyEvent *event);
 
 private:
+    //QList<int> getRowOfIndexes(QModelIndexList &idxList);
 
 signals:
     // None right now.

@@ -5,8 +5,9 @@
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     QMainWindow w;
-    Player *player = new Player;;
+    Player *player = new Player();
     w.setCentralWidget(player);
+    QObject::connect(player, SIGNAL(changeTitle(QString)), &w, SLOT(setWindowTitle(const QString &)));
     w.show();
     return app.exec();
 }

@@ -32,17 +32,32 @@ public:
     virtual QStringList mimetypes() const;
     virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
     void swapSong(int to, QList<int> fromlist, int offset);
+    
+    // playlist management and integration with player.
+    void addMedia(const QStringList& fileNames);
+    void removeMedia(int start, int end);
+    const QUrl setCurMedia(int row);
+    const QUrl nextMedia(void);
+    const QUrl previousMedia(void);
+    int getCurMediaIdx(void) const;
+    QString getCurAlbumArtist(void) const;
+    QString getCurTitle(void) const;
+
 
 private slots:
-    void beginInsertItems(int start, int end);
-    void endInsertItems();
+
     void beginRemoveItems(int start, int end);
     void endRemoveItems();
     void changeItems(int start, int end);
     void changeMetaData(QModelIndex index);
-   
+
+signals:
+   void mediaAdded(void);
+   void currentIndexChanged(int);
+
 private:
-    QMediaPlaylist *m_playlist;
+    //QMediaPlaylist *m_playlist;
+    
     /* m_data is a list of dictionary containing the following,
      * indexed by the column
      *          (fileName: bla)
@@ -53,16 +68,9 @@ private:
      * QMap keeps the order of the dictionary keys.
      */
     QList<QHash<QString, QString> > m_data;
-    int insert_start;
-    int insert_end;
+    int curMediaIdx;
+    //int insert_start;
+    //int insert_end;
     void get_metaData(int row, QString path);
-    /* Used for drag and drop, temporary disconnect so we don't
-       invoke the get_metaData method.
-   */
-    void disconnect_playlist();
-    void reconnect_playlist();
-    void addDataToPlaylist(int row, int count); 
-    void printPlaylist();
-    void remakePlaylist();
 };
 

@@ -24,6 +24,7 @@ public:
 
 signals:
     // no signals so far
+    void changeTitle(QString);
 
 private slots:
     void open(); 
@@ -43,7 +44,8 @@ private slots:
     // Player control for playlists
     void seek(int seconds);
     void jump(const QModelIndex &index);
-    void playlistPositionChanged(int);
+    void playlistPositionChanged(int currentItem);
+    void next();
 
     // General Player status slots
     void statusChanged(QMediaPlayer::MediaStatus status);
@@ -53,7 +55,7 @@ private slots:
     void displayErrorMessage();
 
     // playlist basic controls
-    void addToPlaylist(const QStringList &fileNames);
+    //void addToPlaylist(const QStringList &fileNames);
     //void removeFromPlaylist(const QStringList &fileNames);
 
 private:
@@ -63,7 +65,7 @@ private:
     void updateDurationInfo(qint64 currentInfo);
 
     QMediaPlayer *player;
-    QMediaPlaylist *playlist;
+    //QMediaPlaylist *playlist;
     QLabel *coverLabel;
     QSlider *slider;
     QLabel *labelDuration;
