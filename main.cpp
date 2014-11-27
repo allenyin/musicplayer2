@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "util.h"
 #include "mainWindow.h"
 #include <QApplication>
 

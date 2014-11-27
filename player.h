@@ -1,5 +1,6 @@
 #pragma once
 #include "debug.h"
+#include "util.h"
 #include <QWidget>
 #include <QMediaPlayer>
 #include <QMediaPlaylist>

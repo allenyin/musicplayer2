@@ -1,9 +1,8 @@
 #pragma once
 #include "debug.h"
+#include "util.h"
+#include <QDebug>
 #include <QAbstractTableModel>
-#include <taglib/fileref.h>
-#include <taglib/tag.h>
-#include <taglib/tpropertymap.h>
 #include <QModelIndex>
 
 class QMediaPlaylist;
@@ -72,6 +71,6 @@ private:
     int curMediaIdx;
     //int insert_start;
     //int insert_end;
-    void get_metaData(int row, QString path);
+    //void get_metaData(int row, QString path);
 };
 

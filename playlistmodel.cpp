@@ -1,9 +1,4 @@
 #include "playlistmodel.h"
-#include <sstream>
-#include <iomanip>
-#include <QFileInfo>
-#include <QUrl>
-#include <QMediaPlaylist>
 #include <QColor>
 #include <QBrush>
 #include <QMimeData>
@@ -194,38 +189,59 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     return mimeData;
 }
 
-void PlaylistModel::swapSong(int to, QList<int> fromlist, int offset) {
-    // swap songs with playlist row indicated by the arguments.
-    // if one of the songs being swapped is the current song, the next song
-    // will be the one after that song in the new position.
-    foreach(int from, fromlist) {
-        // then we swap the entry in m_data, then add it back to playlist
-#if DEBU_PLAYLIST
-        qDebug() << "m_data item to move: " << m_data[from];
+void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
+    //moving songs down
+    if (to == -1) {
+#if DEBUG_PLAYLIST
+        qDebug() << "Moving to end";
 #endif
-        if (to == -1) {
-#if DEBU_PLAYLIST
-            qDebug() << "move to back";
+        for (int i=0; i < fromList.size(); i++) {
+            m_data.append(m_data[fromList[0]]);
+            m_data.removeAt(fromList[0]);
+            if (curMediaIdx == fromList[i]) {
+                qDebug() << "Here?";
+                curMediaIdx = (m_data.size()-1)-(fromList.size()-1)+i;
+            }
+        }
+    }
+    if (offset > 0) {
+#if DEBUG_PLAYLIST  
+        qDebug() << "Moving down";
 #endif
-            m_data.move(from, m_data.size()-1);
-            if (curMediaIdx == from) {
-                curMediaIdx = m_data.size()-1;
+        for (int i=0; i < fromList.size(); i++) {
+            m_data.move(fromList[0], to);
+            if (curMediaIdx == fromList[i]) {
+                curMediaIdx = to-(fromList.size()-1)+i;
+            }
+        }
+    }
+
+    if (offset < 0 && to>=0) {
+        // moving songs up
+        if (to == 0) {
+#if DEBUG_PLAYLIST 
+            qDebug() << "Moving to beginning";
+#endif
+            m_data.prepend(m_data[fromList[0]]);
+            m_data.removeAt(fromList[0]+1);
+            if (curMediaIdx == fromList[0]) {
+                curMediaIdx = 0;
+            }
+            for (int i=1; i < fromList.size(); i++) {
+                m_data.move(fromList[i], 1);
+                if (curMediaIdx == fromList[i]) {
+                    curMediaIdx = i;
+                }
             }
         }
         else {
 #if DEBUG_PLAYLIST
-            qDebug() << "move to other index, from=" << from << " offset=" << offset;
+            qDebug() << "Moving up";
 #endif
-            if (offset < 0) {
-                m_data.move(from, from+offset+1);
-                if (curMediaIdx == from) {
-                    curMediaIdx = from+offset+1;
-                }
-            }
-            else {
-                m_data.move(from, from+offset);
-                if (curMediaIdx == from) {
-                    curMediaIdx = from+offset;
+            for (int i=0; i < fromList.size(); i++) {
+                m_data.move(fromList[i], to+i);
+                if (curMediaIdx == fromList[i]) {
+                    curMediaIdx = to+i;
                 }
             }
         }
@@ -235,25 +251,23 @@ void PlaylistModel::swapSong(int to, QList<int> fromlist, int offset) {
 
 void PlaylistModel::addMedia(const QStringList& fileNames) {
     // append media to end of m_data
+    util u;
     int start = m_data.size();
-    int end = start + fileNames.size()-1;
-    beginInsertRows(QModelIndex(), start, end);
-    foreach (QString const &path, fileNames) {
-        QFileInfo fileInfo(path);
-        if (fileInfo.exists()) {
-            QHash<QString, QString> hash;
+    foreach(QString const &path, fileNames) {
+        QHash<QString, QString> hash;
+        u.get_metaData(path, hash);
+        if (!hash.empty()) {
+            beginInsertRows(QModelIndex(), start, start);
             m_data.append(hash);
-            m_data[start]["absFilePath"] = fileInfo.absoluteFilePath();
-            m_data[start]["fileName"] = fileInfo.fileName();
-            get_metaData(start, path);
             start = start+1;
+            endInsertRows();
         }
     }
     if (curMediaIdx < 0) {
         curMediaIdx = 0;
     }
-    endInsertRows();
 }
+
 
 void PlaylistModel::removeMedia(int start, int end) {
     beginRemoveRows(QModelIndex(), start, end);
@@ -337,6 +351,7 @@ void PlaylistModel::changeItems(int start, int end) {
     emit dataChanged(index(start,0), index(end,columns));
 }
 
+/*
 void PlaylistModel::get_metaData(int row, QString path) {
     QByteArray byteArray = path.toUtf8();
     const char* cString = byteArray.constData();
@@ -360,6 +375,7 @@ void PlaylistModel::get_metaData(int row, QString path) {
         m_data[row]["Length"] = l;
     }
 }
+*/
 
 void PlaylistModel::changeMetaData(QModelIndex index) {
     int row = index.row();

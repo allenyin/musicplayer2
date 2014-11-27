@@ -129,9 +129,9 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
         }
         qSort(itemRowList);
         int offset = dropRow - itemRowList.back();
-#if DEBUG_PLAYLISTVIEW
+//#if DEBUG_PLAYLISTVIEW
         qDebug()<<"dropRow is " << dropRow;
-#endif
+//#endif
         PlaylistModel *model = (PlaylistModel*)(QTableView::model());
         model->swapSong(dropRow, itemRowList, offset);
         event->setDropAction(Qt::MoveAction);

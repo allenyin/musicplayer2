@@ -1,5 +1,6 @@
 #pragma once
 #include "debug.h"
+#include "util.h"
 #include <QTableView>
 #include <QMouseEvent>
 #include <QTimer>
