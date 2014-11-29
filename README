@@ -1,0 +1,7 @@
+Required packages:
+
+1) qt-default media player codec (ffmpeg?)
+2) taglib 1.9.1 (latest)
+3) sqlite3
+
+-- Make restriction to allow only one instance to run for database consistency.

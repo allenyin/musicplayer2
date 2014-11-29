@@ -116,7 +116,6 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
 Player::~Player() {
     delete playlistView;
     delete playlistModel;
-    //delete playlist;
     delete labelDuration;
     delete slider;
     delete coverLabel;
