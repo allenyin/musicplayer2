@@ -4,7 +4,7 @@ void util::get_metaData(QString path, QHash<QString, QString>& hash) {
     // get fileInfo first
     QFileInfo fileInfo(path);
     if (fileInfo.exists()) {
-        hash["absFilePath"] = fileInfo.absoluteFilePath();
+        hash["absFilePath"] = fileInfo.canonicalFilePath();
         hash["fileName"] = fileInfo.fileName();
 
         QByteArray byteArray = path.toUtf8();

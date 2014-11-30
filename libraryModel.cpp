@@ -1,7 +1,13 @@
 #include "libraryModel.h"
+#include <assert.h>
 #include <QMimeData>
 #include <QtWidgets>
 #include <QSqlQuery>
+#include <QFileInfo>
+#include <QUrl>
+#include <taglib/fileref.h>
+#include <taglib/tag.h>
+#include <taglib/tpropertymap.h>
 
 LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
     if (!QSqlDatabase::drivers().contains("QSQLITE")) {
@@ -16,7 +22,7 @@ LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
     }
     
     // for iniital testing.
-    addTestEntries();
+    // addTestEntries();
     
     err = populateModel();
     if (err.type() != QSqlError::NoError) {
@@ -47,7 +53,7 @@ QSqlError LibraryModel::initDb() {
     }
 
     QSqlQuery q(db);
-    q.prepare("CREATE TABLE IF NOT EXISTS MUSICLIBRARY(id integer primary key, absFilePath varchar, fileName varchar, Title varchar, Artist varchar, Album varchar, Length int)");
+    q.prepare("CREATE TABLE IF NOT EXISTS MUSICLIBRARY(id integer primary key, absFilePath varchar(200) UNIQUE, fileName varchar, Title varchar, Artist varchar, Album varchar, Length int)");
     if (!q.exec()) {
         // error if table creation not successfull
         qDebug() << "Table creation error?";
@@ -108,7 +114,7 @@ void LibraryModel::addTestEntries() {
 
 }
 
-void LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
+bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
         const QString &title, const QString &artist, const QString &album, const int length) {
     q.bindValue(":absFilePath", absFilePath);
     q.bindValue(":fileName", fileName);
@@ -118,9 +124,16 @@ void LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
     q.bindValue(":Length", length);
     if (!q.exec()) {
         qDebug() << q.lastError();
-        showError(q.lastError(), "addEntry failed!");
+        return false;
     }
-    // item_counts[Artist] += 1;
+
+    if (!item_counts.contains(artist)) {
+        QHash<QString, QString> hash;
+        hash["Artist"] = artist;
+        rootItem->addChild(TreeItem::ARTIST, hash);
+    }
+    item_counts[artist] += 1;
+    return false;
 }
 
 // Protected methods
@@ -190,6 +203,7 @@ QVariant LibraryModel::data(const QModelIndex &index, int role) const {
 
 bool LibraryModel::hasChildren(const QModelIndex &parent) const {
     TreeItem *parentItem = getItem(parent);
+    //qDebug() << "Calling hasChildren on node type=" << parentItem->getItemType();
     switch (parentItem->getItemType()) {
         case TreeItem::ROOT:
             return item_counts.size() > 0;
@@ -229,7 +243,6 @@ bool LibraryModel::canFetchMore(const QModelIndex &parent) const {
             return false;
     }
 }
-
 
 void LibraryModel::fetchMore(const QModelIndex &parent) {
     TreeItem *parentItem = getItem(parent);
@@ -281,4 +294,63 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
         }
         endInsertRows();
     }
+}
+
+void LibraryModel::addFromDir(const QString & dir) {
+    QDirIterator it(dir, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        //qDebug() << "Current file: " << it.next();
+        it.next();
+        QFileInfo fileInfo = it.fileInfo();
+        if (fileInfo.fileName() == "." || fileInfo.fileName() == "..") {
+            continue;
+        }
+        if (fileInfo.isDir() && fileInfo.isReadable() && !fileInfo.isHidden()) {
+            addFromDir(fileInfo.canonicalFilePath());
+        }
+        QString suffix = fileInfo.completeSuffix();
+        if (suffix == "mp3" || suffix == "ogg" || suffix == "raw" || suffix == "wav" || suffix == "wma") {
+            beginInsertRows(QModelIndex(), item_counts.size(), 1);
+            addMusicFile(fileInfo);
+            endInsertRows();
+        }
+    }
+    qDebug() << "Finishing importing from folder";
+}
+
+bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
+    // return true if insertion successfull,
+    // false if not, or if there's duplicate already.
+    QString absFilePath = fileInfo.canonicalFilePath();
+    QString fileName = fileInfo.fileName();
+    QString title, artist, album;
+    int length;
+
+    QByteArray byteArray = absFilePath.toUtf8();
+    const char* cString = byteArray.constData();
+    TagLib::FileRef f(cString);
+    if (f.isNull()) {
+        qDebug() << "Can't read file's tags!";
+        return false;
+    }
+    if (!f.isNull() && f.tag()) {
+        TagLib::Tag *tag = f.tag();
+        title = QString::fromStdString(tag->title().toCString(true));
+        title = title.isEmpty() ? fileName : title;
+        artist = QString::fromStdString(tag->artist().toCString(true));
+        artist = artist.isEmpty() ? "Unknown" : artist;
+        album = QString::fromStdString(tag->album().toCString(true));
+        album = album.isEmpty() ? "Unknown" : album;
+    }
+    assert(f.audioProperties());
+    if (!f.isNull() && f.audioProperties()) {
+        TagLib::AudioProperties *properties = f.audioProperties();
+        length = properties->length();
+    }
+    QSqlQuery q(db);
+    if (!q.prepare("INSERT INTO MUSICLIBRARY(absFilePath, fileName, Title, Artist, Album, Length) "
+              "VALUES (:absFilePath, :fileName, :Title, :Artist, :Album, :Length)")) {
+        qDebug() << "Error at addMusicFile() - preoparing query: " << q.lastError();
+    }
+    return addEntry(q, absFilePath, fileName, title, artist, album, length);
 }

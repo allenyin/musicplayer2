@@ -32,3 +32,7 @@ Library::~Library() {
     delete view;
     delete label;
 }
+
+LibraryModel* Library::model() {
+    return libraryModel;
+}

@@ -12,6 +12,7 @@ class Library : public QWidget {
 public:
     Library(QWidget *parent = 0);
     ~Library();
+    LibraryModel *model();
 
 private:
     LibraryModel *libraryModel;

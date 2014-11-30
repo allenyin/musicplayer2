@@ -19,8 +19,8 @@ class LibraryModel : public QAbstractItemModel {
 public:
     LibraryModel(QObject *parent = 0);
     ~LibraryModel();
-    //bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex());
-    //bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex());
+    // for file imports
+    void addFromDir(const QString &dir); 
 
 protected:
     // inherited from QAbstractItemModel
@@ -35,13 +35,19 @@ protected:
     virtual bool canFetchMore(const QModelIndex &parent) const;
     virtual void fetchMore(const QModelIndex &parent);
 
+    
 private:
     QSqlError initDb();
     QSqlError populateModel();
     void showError(const QSqlError &err, const QString msg);
     void addTestEntries();
-    void addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
+    /*
+     * addEntry is adding an entry to database.
+     * addMusicFile is create a database entry from an actual file.
+     */
+    bool addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
                   const QString &title, const QString &artist, const QString &album, const int length);
+    bool addMusicFile(QFileInfo &fileInfo);
     TreeItem *getItem(const QModelIndex &index) const;
     TreeItem *rootItem;
     QSqlDatabase db;

@@ -351,32 +351,6 @@ void PlaylistModel::changeItems(int start, int end) {
     emit dataChanged(index(start,0), index(end,columns));
 }
 
-/*
-void PlaylistModel::get_metaData(int row, QString path) {
-    QByteArray byteArray = path.toUtf8();
-    const char* cString = byteArray.constData();
-    TagLib::FileRef f(cString);
-    if (!f.isNull() && f.tag()) {
-        TagLib::Tag *tag = f.tag();
-        QString title = QString::fromStdString(tag->title().toCString(true));
-        QString artist = QString::fromStdString(tag->artist().toCString(true));
-        QString album = QString::fromStdString(tag->album().toCString(true));
-        m_data[row]["Title"] = title.isEmpty() ? m_data[row]["fileName"] : title;
-        m_data[row]["Artist"] = artist.isEmpty() ? QString("Unknown") : artist;
-        m_data[row]["Album"] = album.isEmpty() ? QString("Unknown") : album;
-    }
-    if (!f.isNull() && f.audioProperties()) {
-        TagLib::AudioProperties *properties = f.audioProperties();
-        int seconds = properties->length() % 60;
-        int minutes = (properties->length() - seconds)/60;
-        std::stringstream ss;
-        ss << minutes << ":" << std::setfill('0')<<std::setw(2)<<seconds;
-        QString l = QString::fromStdString(ss.str());
-        m_data[row]["Length"] = l;
-    }
-}
-*/
-
 void PlaylistModel::changeMetaData(QModelIndex index) {
     int row = index.row();
     int col = index.column();

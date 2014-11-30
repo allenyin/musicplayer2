@@ -74,8 +74,8 @@ QVariant TreeItem::data() const {
 }
 
 bool TreeItem::addChild(ITEM_TYPE type, QHash<QString, QString> data) {
-    qDebug() << "Want to add item of type " << type;
-    qDebug() << "Adding to item of type " << itemType;
+    //qDebug() << "Want to add item of type " << type;
+    //qDebug() << "Adding to item of type " << itemType;
     assert(type != ROOT);
     itemTypeAssert(type, data);
 

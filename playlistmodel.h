@@ -25,8 +25,6 @@ public:
     virtual QVariant headerData(int section, Qt::Orientation Orientation, int role) const;
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole);
-    QMediaPlaylist *playlist() const;
-    void setPlaylist(QMediaPlaylist *playlist);
     // needed for drag and drop
     virtual Qt::DropActions supportedDropActions() const;
     virtual QStringList mimetypes() const;
