@@ -33,6 +33,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::setupWidgets() {
+    // widgets layout
     QHBoxLayout *hboxLayout = new QHBoxLayout(centralWidget);
 
     QSizePolicy spLibrary(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
@@ -46,6 +47,9 @@ void MainWindow::setupWidgets() {
     hboxLayout->addWidget(player);
     setCentralWidget(centralWidget);
     connect(player, SIGNAL(changeTitle(QString)), this, SLOT(setWindowTitle(const QString &)));
+
+    // signal connections.
+    connect(library, SIGNAL(addToPlaylist(QHash<QString, QString>)), player, SLOT(addFromLibrary(QHash<QString, QString>)));
 }
 
 void MainWindow::setupMenus() {

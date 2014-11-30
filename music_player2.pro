@@ -13,5 +13,5 @@ QT += xml\
 LIBS += -ltag
 
 # Input
-HEADERS += player.h playercontrols.h playlistmodel.h playlistTable.h mainWindow.h util.h debug.h libraryModel.h library.h treeItem.h
-SOURCES += main.cpp player.cpp playercontrols.cpp playlistmodel.cpp playlistTable.cpp mainWindow.cpp util.cpp libraryModel.cpp library.cpp treeItem.cpp
+HEADERS += player.h playercontrols.h playlistmodel.h playlistTable.h mainWindow.h util.h debug.h libraryModel.h library.h treeItem.h libraryView.h
+SOURCES += main.cpp player.cpp playercontrols.cpp playlistmodel.cpp playlistTable.cpp mainWindow.cpp util.cpp libraryModel.cpp library.cpp treeItem.cpp libraryView.cpp

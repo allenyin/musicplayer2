@@ -5,6 +5,7 @@
 #include "library.h"
 #include <QMainWindow>
 #include <QHBoxLayout>
+#include <QtWidgets>
 
 class Player;
 class QHBoxLayout;

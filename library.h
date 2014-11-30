@@ -1,10 +1,12 @@
 #pragma once
 #include "libraryModel.h"
+#include "libraryView.h"
 #include <QWidget>
 #include <QTreeView>
 #include <QLabel>
 
 class LibraryModel;
+class LibraryView;
 
 class Library : public QWidget {
     Q_OBJECT
@@ -12,10 +14,17 @@ class Library : public QWidget {
 public:
     Library(QWidget *parent = 0);
     ~Library();
-    LibraryModel *model();
+    LibraryModel *model() const;
+    LibraryView *view() const;
+
+private slots:
+    void addToPlaylist(QModelIndex idx);
+
+signals:
+    void addToPlaylist(const QHash<QString, QString> hash);
 
 private:
     LibraryModel *libraryModel;
-    QTreeView *view;
+    LibraryView *libraryView;
     QLabel *label;
 };

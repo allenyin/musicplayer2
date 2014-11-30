@@ -8,6 +8,7 @@
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 #include <taglib/tpropertymap.h>
+#include <sstream>
 
 LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
     if (!QSqlDatabase::drivers().contains("QSQLITE")) {
@@ -123,7 +124,7 @@ bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
     q.bindValue(":Album", album);
     q.bindValue(":Length", length);
     if (!q.exec()) {
-        qDebug() << q.lastError();
+        qDebug() << "Error at addEntry() " <<  q.lastError();
         return false;
     }
 
@@ -252,7 +253,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
         int itemsToFetch = qMin(100, remainder);
         QSqlQuery q(db);
         if (!q.exec(QLatin1String("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
-            qDebug() << q.lastError();
+            qDebug() << "At fetchMore (ROOT): " << q.lastError();
             return;
         }
         beginInsertRows(parent, item_counts.size(), item_counts.size()+itemsToFetch-1);
@@ -276,7 +277,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
         int itemsToFetch = qMin(100, remainder);
         QSqlQuery q(db);
         if (!q.exec(QString("SELECT Title, absFilePath  FROM MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(Artist))) {
-            qDebug() << q.lastError();
+            qDebug() << "At fetchMore(ARTIST) " << q.lastError();
             return;
         }
         beginInsertRows(parent, item_counts[Artist], item_counts[Artist]+itemsToFetch-1);
@@ -310,7 +311,7 @@ void LibraryModel::addFromDir(const QString & dir) {
         }
         QString suffix = fileInfo.completeSuffix();
         if (suffix == "mp3" || suffix == "ogg" || suffix == "raw" || suffix == "wav" || suffix == "wma") {
-            beginInsertRows(QModelIndex(), item_counts.size(), 1);
+            beginInsertRows(QModelIndex(), item_counts.size(), item_counts.size());
             addMusicFile(fileInfo);
             endInsertRows();
         }
@@ -350,7 +351,36 @@ bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
     QSqlQuery q(db);
     if (!q.prepare("INSERT INTO MUSICLIBRARY(absFilePath, fileName, Title, Artist, Album, Length) "
               "VALUES (:absFilePath, :fileName, :Title, :Artist, :Album, :Length)")) {
-        qDebug() << "Error at addMusicFile() - preoparing query: " << q.lastError();
+        qDebug() << "Error at addMusicFile() - preparing query: " << q.lastError();
     }
     return addEntry(q, absFilePath, fileName, title, artist, album, length);
+}
+
+QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) {
+    QHash<QString, QString> hash;
+    TreeItem *item = getItem(idx);
+    QString absFilePath = item->getItemData()["absFilePath"];
+
+    // query database
+    QSqlQuery q(db);
+    if (!q.exec(QString("SELECT fileName, Title, Artist, Album, Length FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
+        qDebug() << "Error at getSongInfo() - Executing query: " << q.lastError();
+    }
+    q.next();
+    //qDebug() << "Here: " << q.lastError();
+    hash["absFilePath"] = absFilePath;
+    hash["fileName"] = q.value(0).toString();
+    hash["Title"] = q.value(1).toString();
+    hash["Artist"] = q.value(2).toString();
+    hash["Album"] = q.value(3).toString();
+    
+    // convert length in seconds to min:sec qstring format
+    int l = q.value(4).toInt();
+    int seconds = l % 60;
+    int minutes = (l-seconds)/60;
+    std::stringstream ss;
+    ss << minutes << ":" << std::setfill('0') << std::setw(2) << seconds;
+    hash["Length"] = QString::fromStdString(ss.str());
+    
+    return hash;
 }

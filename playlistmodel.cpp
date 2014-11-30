@@ -249,6 +249,7 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
     emit(dataChanged(index(0,0), index(m_data.size()-1, columns)));
 }
 
+// open() button uses this
 void PlaylistModel::addMedia(const QStringList& fileNames) {
     // append media to end of m_data
     util u;
@@ -267,6 +268,17 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
         curMediaIdx = 0;
     }
 }
+
+// library doubleclick uses this
+void PlaylistModel::addMedia(QHash<QString, QString> libraryItem) {
+    beginInsertRows(QModelIndex(), m_data.size(), m_data.size()); 
+    m_data.append(libraryItem);
+    endInsertRows();
+    if (curMediaIdx < 0) {
+        curMediaIdx = 0;
+    }
+}
+
 
 
 void PlaylistModel::removeMedia(int start, int end) {
@@ -329,12 +341,6 @@ QString PlaylistModel::getCurAlbumArtist() const {
 QString PlaylistModel::getCurTitle() const {
     return m_data[curMediaIdx]["Title"];
 }
-
-
-
-
-//void PlaylistModel::removeMedia(int start, int end) {
-//}
 
 void PlaylistModel::beginRemoveItems(int start, int end) {
     beginRemoveRows(QModelIndex(), start, end);

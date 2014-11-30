@@ -29,6 +29,7 @@ signals:
 
 private slots:
     void open(); 
+    void addFromLibrary(const QHash<QString, QString> hash);
 
     /* For Mediaplayer signals
      * durationChanged: Change of total playback time in ms of current media.

@@ -129,6 +129,10 @@ void Player::open() {
     playlistModel->addMedia(fileNames);
 }
 
+void Player::addFromLibrary(QHash<QString, QString> hash) {
+    playlistModel->addMedia(hash);
+}
+
 void Player::durationChanged(qint64 duration) {
     this->duration = duration/1000;
     slider->setMaximum(duration/1000);

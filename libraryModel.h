@@ -21,6 +21,8 @@ public:
     ~LibraryModel();
     // for file imports
     void addFromDir(const QString &dir); 
+    TreeItem *getItem(const QModelIndex &index) const;
+    QHash<QString, QString> getSongInfo(const QModelIndex idx);
 
 protected:
     // inherited from QAbstractItemModel
@@ -48,7 +50,6 @@ private:
     bool addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
                   const QString &title, const QString &artist, const QString &album, const int length);
     bool addMusicFile(QFileInfo &fileInfo);
-    TreeItem *getItem(const QModelIndex &index) const;
     TreeItem *rootItem;
     QSqlDatabase db;
     QHash<QString, int> item_counts;

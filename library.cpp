@@ -11,28 +11,39 @@ Library::Library(QWidget *parent) : QWidget(parent) {
     label = new QLabel(tr("Library:"));
     
     // view
-    view = new QTreeView(this);
-    view->setSelectionBehavior(QAbstractItemView::SelectItems);
-    view->setAnimated(false);
-    view->setModel(libraryModel);
-    view->resizeColumnToContents(0);
-    view->setItemsExpandable(true);
-    view->setHeaderHidden(true);
-    //view->setUniformRowHeights(true);
+    libraryView = new LibraryView(this);
+    libraryView->setModel(libraryModel);
 
+    // layout
     QBoxLayout *displayLayout = new QVBoxLayout;
     displayLayout->addWidget(label);
-    displayLayout->addWidget(view);
+    displayLayout->addWidget(libraryView);
     setLayout(displayLayout);
+
+    // signal connections
+    connect(libraryView, SIGNAL(activated(QModelIndex)), this, SLOT(addToPlaylist(QModelIndex)));
 
 }
 
 Library::~Library() {
     delete libraryModel;
-    delete view;
+    delete libraryView;
     delete label;
 }
 
-LibraryModel* Library::model() {
+LibraryModel* Library::model() const {
     return libraryModel;
+}
+
+LibraryView* Library::view() const {
+    return libraryView;
+}
+
+// slot
+void Library::addToPlaylist(const QModelIndex idx) {
+    TreeItem *item = libraryModel->getItem(idx);
+    //qDebug() << "Clicked item has data: " << item->data();
+    if (item->getItemType() == TreeItem::SONG) {
+        emit(addToPlaylist(libraryModel->getSongInfo(idx)));
+    }
 }

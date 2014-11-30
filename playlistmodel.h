@@ -33,6 +33,7 @@ public:
     
     // playlist management and integration with player.
     void addMedia(const QStringList& fileNames);
+    void addMedia(QHash<QString, QString>  libraryItem);
     void removeMedia(int start, int end);
     const QUrl setCurMedia(int row);
     const QUrl nextMedia(void);
@@ -40,7 +41,6 @@ public:
     int getCurMediaIdx(void) const;
     QString getCurAlbumArtist(void) const;
     QString getCurTitle(void) const;
-
 
 private slots:
 
