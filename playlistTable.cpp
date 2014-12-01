@@ -78,7 +78,9 @@ void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
 //    qDebug()<<"dragEnterEvent";
 //#endif
 
-    if (event->mimeData()->hasFormat("playlistItem")) {
+    if (event->mimeData()->hasFormat("playlistItem") ||
+        event->mimeData()->hasFormat("libraryItem")) {
+        qDebug() << "playlistTable::dragEnterEvent()";
 
 #if DEBUG_PLAYLISTVIEW
         QPoint dragPos = event->pos();
@@ -98,7 +100,12 @@ void PlaylistTable::dragMoveEvent(QDragMoveEvent *event) {
 //#endif
 
     if (event->mimeData()->hasFormat("playlistItem")) {
+        qDebug() << "playlistTable::dragMoveEvent(playlistItem)";
         event->setDropAction(Qt::MoveAction);
+        event->accept();
+    }
+    if (event->mimeData()->hasFormat("libraryItem")) {
+        event->setDropAction(Qt::CopyAction);
         event->accept();
     }
     else {
@@ -107,9 +114,7 @@ void PlaylistTable::dragMoveEvent(QDragMoveEvent *event) {
 }
 
 void PlaylistTable::dropEvent(QDropEvent *event) {
-#if DEBUG_PLAYLISTVIEW
-    qDebug()<<"dropEvent";
-#endif
+    qDebug()<<"PlaylistTable::dropEvent()";
 
     if (event->mimeData()->hasFormat("playlistItem")) {
         // this is when we re-arrange items in the playlist
@@ -132,8 +137,24 @@ void PlaylistTable::dropEvent(QDropEvent *event) {
 #if DEBUG_PLAYLISTVIEW
         qDebug()<<"dropRow is " << dropRow;
 #endif
-        PlaylistModel *model = (PlaylistModel*)(QTableView::model());
+        PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
         model->swapSong(dropRow, itemRowList, offset);
+        event->setDropAction(Qt::MoveAction);
+        event->accept();
+    }
+    if (event->mimeData()->hasFormat("libraryItem")) {
+        //QPoint dropPos = event->pos();
+        //int dropRow = QTableView::indexAt(dropPos).row();
+        QByteArray itemData = event->mimeData()->data("libraryItem");
+        QDataStream dataStream(&itemData, QIODevice::ReadOnly);
+        QList<QHash<QString, QString> > itemList;
+        QHash<QString, QString> hash;
+        while (!dataStream.atEnd()) {
+            dataStream >> hash;
+            itemList << hash;
+        }
+        PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
+        model->addMediaList(itemList);
         event->setDropAction(Qt::MoveAction);
         event->accept();
     }

@@ -357,7 +357,7 @@ bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
     return addEntry(q, absFilePath, fileName, title, artist, album, length);
 }
 
-QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) {
+QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) const {
     QHash<QString, QString> hash;
     TreeItem *item = getItem(idx);
     QString absFilePath = item->getItemData()["absFilePath"];
@@ -375,21 +375,10 @@ QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) {
     hash["Artist"] = q.value(2).toString();
     hash["Album"] = q.value(3).toString();
     hash["Length"] = u->convert_length_format(q.value(4).toInt());
-    
-    // convert length in seconds to min:sec qstring format
-    /*
-    int l = q.value(4).toInt();
-    int seconds = l % 60;
-    int minutes = (l-seconds)/60;
-    std::stringstream ss;
-    ss << minutes << ":" << std::setfill('0') << std::setw(2) << seconds;
-    hash["Length"] = QString::fromStdString(ss.str());
-    */
-    
     return hash;
 }
 
-QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelIndex idx) {
+QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelIndex idx) const{
     QList<QHash<QString, QString> > hashList;
     TreeItem *item = getItem(idx);
     // Query database to get all songs by this artist
@@ -408,6 +397,45 @@ QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelInde
         hashList.append(hash);
     }
     return hashList;
+}
+
+QMimeData *LibraryModel::mimeData(const QModelIndexList &indexes) const {
+    qDebug() << "Calling libraryModel mimeData";
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    QModelIndex index;
+    TreeItem *item;
+    foreach(index, indexes) {
+        if (index.isValid()) {
+            item = getItem(index);
+            if (item->getItemType() == TreeItem::ARTIST) {
+                // do stuff
+                QList<QHash<QString, QString> > songList = getArtistSongInfo(index);
+                QHash<QString, QString> hash;
+                foreach(hash, songList) {
+                    stream << hash;
+                }
+             }
+            else if (item->getItemType() == TreeItem::SONG) {
+                // do stuff
+                QHash<QString, QString> song = getSongInfo(index);
+                stream << song;
+            }
+        }
+    }
+    mimeData->setData("libraryItem", encodedData);
+    qDebug() << "Called mimeData with indexes=" << indexes;
+    return mimeData;
+}
+
+Qt::ItemFlags LibraryModel::flags(const QModelIndex &index) const {
+    if (!index.isValid()) {
+        return Qt::ItemIsEnabled;
+    }
+    else {
+        return QAbstractItemModel::flags(index) | Qt::ItemIsDragEnabled;
+    }
 }
         
 

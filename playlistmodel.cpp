@@ -162,11 +162,12 @@ Qt::DropActions PlaylistModel::supportedDropActions() const {
 
 QStringList PlaylistModel::mimetypes() const {
     QStringList types;
-    types << "playlistItem";
+    types << "playlistItem" << "libraryItem";
     return types;
 }
 
 QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
+    qDebug() << "PlaylistModel::mimeData() called with indexes=" << indexes;
     QMimeData *mimeData = new QMimeData();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);

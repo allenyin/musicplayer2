@@ -22,8 +22,8 @@ public:
     // for file imports
     void addFromDir(const QString &dir); 
     TreeItem *getItem(const QModelIndex &index) const;
-    QHash<QString, QString> getSongInfo(const QModelIndex idx);
-    QList<QHash<QString, QString> > getArtistSongInfo(const QModelIndex idx);
+    QHash<QString, QString> getSongInfo(const QModelIndex idx) const;
+    QList<QHash<QString, QString> > getArtistSongInfo(const QModelIndex idx) const;
 
 protected:
     // inherited from QAbstractItemModel
@@ -37,6 +37,10 @@ protected:
     virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
     virtual bool canFetchMore(const QModelIndex &parent) const;
     virtual void fetchMore(const QModelIndex &parent);
+
+    // drag and drop support with playlist
+    virtual QMimeData* mimeData(const QModelIndexList &indexes) const;
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
     
 private:
