@@ -40,7 +40,6 @@ void PlaylistTable::mouseDoubleClickEvent(QMouseEvent* e) {
 void PlaylistTable::mouseReleaseEvent(QMouseEvent* e) {
     if (e->button() == Qt::LeftButton) {
         // Use base handler
-        std::cout << "Single left click here!\n";
         QTableView::mouseReleaseEvent(e);
     }
     else {
@@ -74,13 +73,9 @@ void PlaylistTable::keyPressEvent(QKeyEvent *event) {
 }
 
 void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
-//#if DEBUG_PLAYLIST
-//    qDebug()<<"dragEnterEvent";
-//#endif
 
-    if (event->mimeData()->hasFormat("playlistItem") ||
-        event->mimeData()->hasFormat("libraryItem")) {
-        qDebug() << "playlistTable::dragEnterEvent()";
+    if (event->mimeData()->hasFormat("myMediaItem")) {
+        //qDebug() << "playlistTable::dragEnterEvent()";
 
 #if DEBUG_PLAYLISTVIEW
         QPoint dragPos = event->pos();
@@ -95,68 +90,62 @@ void PlaylistTable::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void PlaylistTable::dragMoveEvent(QDragMoveEvent *event) {
-//#if DEBUG_PLAYLISTVIEW
-//    qDebug()<<"dragMoveEvent";
-//#endif
 
-    if (event->mimeData()->hasFormat("playlistItem")) {
-        qDebug() << "playlistTable::dragMoveEvent(playlistItem)";
+    if (event->mimeData()->hasFormat("myMediaItem")) {
+        //qDebug() << "playlistTable::dragMoveEvent(myMediaItem)";
         event->setDropAction(Qt::MoveAction);
         event->accept();
-    }
-    if (event->mimeData()->hasFormat("libraryItem")) {
-        event->setDropAction(Qt::CopyAction);
-        event->accept();
-    }
+    }    
     else {
         event->ignore();
     }
 }
 
 void PlaylistTable::dropEvent(QDropEvent *event) {
-    qDebug()<<"PlaylistTable::dropEvent()";
+    //qDebug()<<"PlaylistTable::dropEvent()";
 
-    if (event->mimeData()->hasFormat("playlistItem")) {
+    if (event->mimeData()->hasFormat("myMediaItem")) {
         // this is when we re-arrange items in the playlist
-        QPoint dropPos = event->pos();
-        int dropRow = QTableView::indexAt(dropPos).row();
-        QByteArray itemData = event->mimeData()->data("playlistItem");
+        QByteArray itemData = event->mimeData()->data("myMediaItem");
         QDataStream dataStream(&itemData, QIODevice::ReadOnly);
-        QList<int> itemRowList;
-        while (!dataStream.atEnd()) {
-            int itemRow;
-            dataStream >> itemRow;
-            itemRowList << itemRow;
+        QString header;
+        dataStream >> header;
+        qDebug() << "Header is: " << header;
 
+        if (header == "playlistItem") {
+        
+            QPoint dropPos = event->pos();
+            int dropRow = QTableView::indexAt(dropPos).row();
+
+            QList<int> itemRowList;
+            while (!dataStream.atEnd()) {
+                int itemRow;
+                dataStream >> itemRow;
+                itemRowList << itemRow;
+            }
+            qSort(itemRowList);
+            int offset = dropRow - itemRowList.back();
 #if DEBUG_PLAYLISTVIEW
-            qDebug() << "Decoded mimeData: " << itemRow;
+            qDebug()<<"dropRow is " << dropRow;
 #endif
+            PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
+            model->swapSong(dropRow, itemRowList, offset);
+            event->setDropAction(Qt::MoveAction);
+            event->accept();
         }
-        qSort(itemRowList);
-        int offset = dropRow - itemRowList.back();
-#if DEBUG_PLAYLISTVIEW
-        qDebug()<<"dropRow is " << dropRow;
-#endif
-        PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
-        model->swapSong(dropRow, itemRowList, offset);
-        event->setDropAction(Qt::MoveAction);
-        event->accept();
-    }
-    if (event->mimeData()->hasFormat("libraryItem")) {
-        //QPoint dropPos = event->pos();
-        //int dropRow = QTableView::indexAt(dropPos).row();
-        QByteArray itemData = event->mimeData()->data("libraryItem");
-        QDataStream dataStream(&itemData, QIODevice::ReadOnly);
-        QList<QHash<QString, QString> > itemList;
-        QHash<QString, QString> hash;
-        while (!dataStream.atEnd()) {
-            dataStream >> hash;
-            itemList << hash;
+
+        if (header == "libraryItem") {
+            QList<QHash<QString, QString> > itemList;
+            QHash<QString, QString> hash;
+            while (!dataStream.atEnd()) {
+                dataStream >> hash;
+                itemList << hash;
+            }
+            PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
+            model->addMediaList(itemList);
+            event->setDropAction(Qt::CopyAction);
+            event->accept();
         }
-        PlaylistModel *model = static_cast<PlaylistModel*>(QTableView::model());
-        model->addMediaList(itemList);
-        event->setDropAction(Qt::MoveAction);
-        event->accept();
     }
     else {
         event->ignore();

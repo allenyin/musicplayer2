@@ -404,6 +404,9 @@ QMimeData *LibraryModel::mimeData(const QModelIndexList &indexes) const {
     QMimeData *mimeData = new QMimeData();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    QString header = "libraryItem";
+    stream << header; // mimeData header
+
     QModelIndex index;
     TreeItem *item;
     foreach(index, indexes) {
@@ -424,7 +427,7 @@ QMimeData *LibraryModel::mimeData(const QModelIndexList &indexes) const {
             }
         }
     }
-    mimeData->setData("libraryItem", encodedData);
+    mimeData->setData("myMediaItem", encodedData);
     qDebug() << "Called mimeData with indexes=" << indexes;
     return mimeData;
 }

@@ -162,17 +162,19 @@ Qt::DropActions PlaylistModel::supportedDropActions() const {
 
 QStringList PlaylistModel::mimetypes() const {
     QStringList types;
-    types << "playlistItem" << "libraryItem";
+    types << "myMediaItem";
     return types;
 }
 
 QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
-    qDebug() << "PlaylistModel::mimeData() called with indexes=" << indexes;
+    //qDebug() << "PlaylistModel::mimeData() called with indexes=" << indexes;
     QMimeData *mimeData = new QMimeData();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     QModelIndex index = indexes[0];
     int row = -1;
+    QString header = "playlistItem";
+    stream << header;  // mimeData header;
     
     foreach(index, indexes) {
         if (index.isValid()) {
@@ -185,7 +187,7 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
             }
         }
     }
-    mimeData->setData("playlistItem", encodedData);
+    mimeData->setData("myMediaItem", encodedData);
 #if DEBUG_PLAYLIST
     qDebug()<< "Called mimeData with indexes=" << indexes;
 #endif
@@ -202,7 +204,6 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
             m_data.append(m_data[fromList[0]]);
             m_data.removeAt(fromList[0]);
             if (curMediaIdx == fromList[i]) {
-                qDebug() << "Here?";
                 curMediaIdx = (m_data.size()-1)-(fromList.size()-1)+i;
             }
         }
