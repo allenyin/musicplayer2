@@ -1,6 +1,6 @@
 #include "util.h"
 #include <QHash>
-void util::get_metaData(QString path, QHash<QString, QString>& hash) {
+void Util::get_metaData(QString path, QHash<QString, QString>& hash) {
     // get fileInfo first
     QFileInfo fileInfo(path);
     if (fileInfo.exists()) {
@@ -33,4 +33,12 @@ void util::get_metaData(QString path, QHash<QString, QString>& hash) {
         }
     }
     // otherwise leave the hash empty.
+}
+
+QString Util::convert_length_format(int l) {
+    int seconds = l % 60;
+    int minutes = (l-seconds)/60;
+    std::stringstream ss;
+    ss << minutes << ":" << std::setfill('0') << std::setw(2) << seconds;
+    return QString::fromStdString(ss.str());
 }

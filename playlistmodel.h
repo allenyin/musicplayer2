@@ -4,17 +4,26 @@
 #include <QDebug>
 #include <QAbstractTableModel>
 #include <QModelIndex>
-
-class QMediaPlaylist;
+#include <QMediaContent>
 
 class PlaylistModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
-    int columns;
+    // flags for different playback mode
+    const static int NORMAL = 1;    // 0001
+    const static int REPEAT1 = 2;   // 0010
+    const static int REPEATALL = 4; // 0100
+    const static int SHUFFLE = 8;   // 1000
+
     // constructor
     PlaylistModel(QObject *parent = 0);
     ~PlaylistModel();
+
+    // getters
+    int getCurMediaIdx() const;
+    int getColumns() const;
+    bool keepPlaying() const;
     
     // compulsory inherited methods
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -33,12 +42,16 @@ public:
     
     // playlist management and integration with player.
     void addMedia(const QStringList& fileNames);
-    void addMedia(QHash<QString, QString>  libraryItem);
+    void addMedia(const QHash<QString, QString>  libraryItem);
+    void addMediaList(const QList<QHash<QString, QString> > libraryItemList);
     void removeMedia(int start, int end);
-    const QUrl setCurMedia(int row);
-    const QUrl nextMedia(void);
-    const QUrl previousMedia(void);
-    int getCurMediaIdx(void) const;
+    const QMediaContent setCurMedia(int row);
+    const QMediaContent nextMedia(void);
+    const QMediaContent pressNextMedia(void);
+    const QMediaContent previousMedia(void);
+    const QMediaContent currentMedia(void);
+    void setMode(int newMode, bool checked);
+    void clear();
     QString getCurAlbumArtist(void) const;
     QString getCurTitle(void) const;
 
@@ -50,12 +63,12 @@ private slots:
     void changeMetaData(QModelIndex index);
 
 signals:
-   void mediaAdded(void);
+   void mediaAdded();
    void currentIndexChanged(int);
+   void curMediaRemoved(int);
+   void resetPlaylist();
 
 private:
-    //QMediaPlaylist *m_playlist;
-    
     /* m_data is a list of dictionary containing the following,
      * indexed by the column
      *          (fileName: bla)
@@ -67,8 +80,11 @@ private:
      */
     QList<QHash<QString, QString> > m_data;
     int curMediaIdx;
-    //int insert_start;
-    //int insert_end;
-    //void get_metaData(int row, QString path);
+    Util *u;
+    int mode;
+    int columns;
+    bool finishedPlaylist;
+
+
 };
 

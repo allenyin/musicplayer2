@@ -11,6 +11,7 @@
 #include <sstream>
 
 LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
+    u = new Util();
     if (!QSqlDatabase::drivers().contains("QSQLITE")) {
         QMessageBox msgBox;
         msgBox.setText("Unable to load database, Library needs the SQLITE driver");
@@ -325,7 +326,7 @@ bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
     QString absFilePath = fileInfo.canonicalFilePath();
     QString fileName = fileInfo.fileName();
     QString title, artist, album;
-    int length;
+    int length = 0;
 
     QByteArray byteArray = absFilePath.toUtf8();
     const char* cString = byteArray.constData();
@@ -373,14 +374,40 @@ QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) {
     hash["Title"] = q.value(1).toString();
     hash["Artist"] = q.value(2).toString();
     hash["Album"] = q.value(3).toString();
+    hash["Length"] = u->convert_length_format(q.value(4).toInt());
     
     // convert length in seconds to min:sec qstring format
+    /*
     int l = q.value(4).toInt();
     int seconds = l % 60;
     int minutes = (l-seconds)/60;
     std::stringstream ss;
     ss << minutes << ":" << std::setfill('0') << std::setw(2) << seconds;
     hash["Length"] = QString::fromStdString(ss.str());
+    */
     
     return hash;
 }
+
+QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelIndex idx) {
+    QList<QHash<QString, QString> > hashList;
+    TreeItem *item = getItem(idx);
+    // Query database to get all songs by this artist
+    QSqlQuery q(db);
+    if (!q.exec(QString("SELECT absFilePath, fileName, Title, Artist, Album, Length from MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(item->data().toString()))) {
+        qDebug() << "Error at getArtistSongInfo(() - Executing query: " << q.lastError();
+    }
+    while (q.next()) {
+        QHash<QString, QString> hash;
+        hash["absFilePath"] = q.value(0).toString();
+        hash["fileName"] = q.value(1).toString();
+        hash["Title"] = q.value(2).toString();
+        hash["Artist"] = q.value(3).toString();
+        hash["Album"] = q.value(4).toString();
+        hash["Length"] = u->convert_length_format(q.value(5).toInt());
+        hashList.append(hash);
+    }
+    return hashList;
+}
+        
+

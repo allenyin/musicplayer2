@@ -12,7 +12,7 @@
  * db.setDatabaseName("fileName.db3");
  * db.open();
  */
- 
+
 class LibraryModel : public QAbstractItemModel {
     Q_OBJECT
 
@@ -23,6 +23,7 @@ public:
     void addFromDir(const QString &dir); 
     TreeItem *getItem(const QModelIndex &index) const;
     QHash<QString, QString> getSongInfo(const QModelIndex idx);
+    QList<QHash<QString, QString> > getArtistSongInfo(const QModelIndex idx);
 
 protected:
     // inherited from QAbstractItemModel
@@ -50,6 +51,7 @@ private:
     bool addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
                   const QString &title, const QString &artist, const QString &album, const int length);
     bool addMusicFile(QFileInfo &fileInfo);
+    Util *u;
     TreeItem *rootItem;
     QSqlDatabase db;
     QHash<QString, int> item_counts;

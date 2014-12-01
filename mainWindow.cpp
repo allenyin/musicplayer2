@@ -49,7 +49,8 @@ void MainWindow::setupWidgets() {
     connect(player, SIGNAL(changeTitle(QString)), this, SLOT(setWindowTitle(const QString &)));
 
     // signal connections.
-    connect(library, SIGNAL(addToPlaylist(QHash<QString, QString>)), player, SLOT(addFromLibrary(QHash<QString, QString>)));
+    connect(library, SIGNAL(addSongToPlaylist(QHash<QString, QString>)), player, SLOT(addSongFromLibrary(QHash<QString, QString>)));
+    connect(library, SIGNAL(addArtistToPlaylist(QList<QHash<QString, QString> >)), player, SLOT(addArtistFromLibrary(QList<QHash<QString, QString> >)));
 }
 
 void MainWindow::setupMenus() {

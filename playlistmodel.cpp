@@ -3,12 +3,14 @@
 #include <QBrush>
 #include <QMimeData>
 
-
 PlaylistModel::PlaylistModel(QObject *parent) 
     : QAbstractTableModel(parent){
     columns = 4;
     m_data = QList<QHash<QString, QString> >();
     curMediaIdx = -1;
+    finishedPlaylist = false;
+    u = new Util();
+    mode = NORMAL;
 }
 
 PlaylistModel::~PlaylistModel() {
@@ -252,11 +254,10 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
 // open() button uses this
 void PlaylistModel::addMedia(const QStringList& fileNames) {
     // append media to end of m_data
-    util u;
     int start = m_data.size();
     foreach(QString const &path, fileNames) {
         QHash<QString, QString> hash;
-        u.get_metaData(path, hash);
+        u->get_metaData(path, hash);
         if (!hash.empty()) {
             beginInsertRows(QModelIndex(), start, start);
             m_data.append(hash);
@@ -270,7 +271,7 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
 }
 
 // library doubleclick uses this
-void PlaylistModel::addMedia(QHash<QString, QString> libraryItem) {
+void PlaylistModel::addMedia(const QHash<QString, QString> libraryItem) {
     beginInsertRows(QModelIndex(), m_data.size(), m_data.size()); 
     m_data.append(libraryItem);
     endInsertRows();
@@ -279,17 +280,26 @@ void PlaylistModel::addMedia(QHash<QString, QString> libraryItem) {
     }
 }
 
-
+void PlaylistModel::addMediaList(const QList<QHash<QString, QString> > libraryItemList) {
+    QHash<QString, QString> item;
+    foreach(item, libraryItemList) {
+        addMedia(item);
+    }
+}
 
 void PlaylistModel::removeMedia(int start, int end) {
     beginRemoveRows(QModelIndex(), start, end);
     for (int i=0; i < end-start+1; i++) {
         m_data.removeAt(start);
+        if (curMediaIdx == start+i) {
+            curMediaIdx = (m_data.size()>0) ? 0 : -1;
+            emit(curMediaRemoved(curMediaIdx));
+        }
     }
     endRemoveRows();
 }
 
-const QUrl PlaylistModel::setCurMedia(int row){
+const QMediaContent PlaylistModel::setCurMedia(int row){
     // set current media to row
     if (row >= 0 && row < m_data.size()) {
         curMediaIdx = row;
@@ -298,38 +308,112 @@ const QUrl PlaylistModel::setCurMedia(int row){
         return url;
     }
     else {
-        return QUrl();
+        return QMediaContent();
     }
 }
 
-const QUrl PlaylistModel::nextMedia(){
-    // set current media to the next entry and return url
-    if (curMediaIdx+1 == m_data.size()) {
-        curMediaIdx = 0;
+const QMediaContent PlaylistModel::nextMedia(){
+    // set current media to the next entry, when called after the previous one finished playing
+    // and returns the media content.
+    finishedPlaylist = false;
+    if (m_data.size() > 0) {
+        if (curMediaIdx == m_data.size()-1) {
+            finishedPlaylist = true;
+        }
+        if ( mode & REPEAT1 ) {
+            // mode is repeat 1
+            curMediaIdx = curMediaIdx;
+         }
+        else if (mode & SHUFFLE) {
+            curMediaIdx = qrand() % m_data.size();
+        }
+        else {
+            if (finishedPlaylist) {
+                curMediaIdx = 0;
+            }
+            else {
+                curMediaIdx++;
+            }
+        }
+        QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
+        emit(currentIndexChanged(curMediaIdx));
+        return url;
+    }
+    return QMediaContent();
+}
+
+const QMediaContent PlaylistModel::pressNextMedia() {
+    finishedPlaylist = false;
+    if (m_data.size() > 0) {
+        if (mode & SHUFFLE) {
+            curMediaIdx = qrand() % m_data.size();
+        }
+        else {
+            curMediaIdx = (curMediaIdx+1) % m_data.size();
+        }
+        QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
+        emit(currentIndexChanged(curMediaIdx));
+        return url;
+    }
+    return QMediaContent();
+}
+
+const QMediaContent PlaylistModel::currentMedia() {
+    if (curMediaIdx >= 0) {
+        qDebug() << "Getting current media";
+        QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
+        return url;
     }
     else {
-        curMediaIdx = curMediaIdx+1;
+        return QMediaContent();
     }
-    QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
-    emit(currentIndexChanged(curMediaIdx));
-    return url;
 }
 
-const QUrl PlaylistModel::previousMedia() {
+const QMediaContent PlaylistModel::previousMedia() {
     // set and return the previous entry
-    if (curMediaIdx == 0) {
-        curMediaIdx = m_data.size()-1;
+    if (m_data.size() > 0) {
+        if (curMediaIdx == 0) {
+            curMediaIdx = m_data.size()-1;
+        }
+        else {
+            curMediaIdx = curMediaIdx-1;
+        }
+        QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
+        emit(currentIndexChanged(curMediaIdx));
+        return url;
     }
-    else {
-        curMediaIdx = curMediaIdx-1;
-    }
-    QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
-    emit(currentIndexChanged(curMediaIdx));
-    return url;
+    return QMediaContent();
 }
 
 int PlaylistModel::getCurMediaIdx() const{
     return curMediaIdx;
+}
+
+int PlaylistModel::getColumns() const {
+    return columns;
+}
+
+bool PlaylistModel::keepPlaying() const {
+    // keep playing if not mode repeatall or shuffle or repeat1
+    return !(finishedPlaylist && (mode == NORMAL));
+}
+
+void PlaylistModel::setMode(int newMode, bool checked) {
+    if (checked) {
+        // set mode
+        mode |= newMode;
+    }
+    else {
+        mode &= ~newMode;
+    }
+}
+
+void PlaylistModel::clear() {
+    // delete all the playlist entries and rest curMediaIdx;
+    beginRemoveRows(QModelIndex(), 0, m_data.size()-1);
+    m_data.clear();
+    endRemoveRows();
+    curMediaIdx = -1;
 }
 
 QString PlaylistModel::getCurAlbumArtist() const {
@@ -396,3 +480,5 @@ void PlaylistModel::changeMetaData(QModelIndex index) {
     }
     return;
 }
+
+

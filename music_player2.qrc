@@ -1,0 +1,10 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>images/shuffle_google_128px.png</file>
+    <file>images/repeatOne_google_128px.png</file>
+    <file>images/repeatAll_google_128px.png</file>
+    <file>images/saveList_google_128px.png</file>
+    <file>images/clearList_google_128px.png</file>
+</qresource>
+</RCC>
+

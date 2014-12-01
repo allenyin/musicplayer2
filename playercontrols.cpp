@@ -42,6 +42,7 @@ PlayerControls::PlayerControls(QWidget *parent) :
 
     volumeSlider = new QSlider(Qt::Horizontal, this);
     volumeSlider->setRange(0, 100);
+    volumeSlider->setFixedSize(volumeSlider->sizeHint());
     connect(volumeSlider, SIGNAL(sliderMoved(int)), this, SIGNAL(changeVolume(int)));
 
     // playback rate box chooser
@@ -58,8 +59,10 @@ PlayerControls::PlayerControls(QWidget *parent) :
     rateBox->addItem("1.0x", QVariant(1.0));
     rateBox->addItem("2.0x", QVariant(2.0));
     rateBox->setCurrentIndex(1);
+    rateBox->setFixedSize(rateBox->sizeHint());
     connect(rateBox, SIGNAL(activated(int)), SLOT(updateRate()));
 
+    // layout stuff
     QBoxLayout *layout = new QHBoxLayout;
     layout->setMargin(0);
     layout->addWidget(stopButton);
@@ -67,9 +70,26 @@ PlayerControls::PlayerControls(QWidget *parent) :
     layout->addWidget(playButton);
     layout->addWidget(nextButton);
     layout->addWidget(muteButton);
-    layout->addWidget(volumeSlider);
-    layout->addWidget(rateBox);
+    layout->addStretch();
+    layout->setSpacing(0);
+
+    QBoxLayout *rightEndLayout = new QHBoxLayout;
+    rightEndLayout->setDirection(QBoxLayout::RightToLeft);
+    rightEndLayout->addWidget(rateBox);
+    rightEndLayout->addWidget(volumeSlider);
+
+    layout->addLayout(rightEndLayout);
     setLayout(layout);
+}
+
+PlayerControls::~PlayerControls() {
+    delete playButton;
+    delete stopButton;
+    delete nextButton;
+    delete previousButton;
+    delete muteButton;
+    delete volumeSlider;
+    delete rateBox;
 }
 
 QMediaPlayer::State PlayerControls::state() const {

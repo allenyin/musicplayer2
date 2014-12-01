@@ -29,7 +29,8 @@ signals:
 
 private slots:
     void open(); 
-    void addFromLibrary(const QHash<QString, QString> hash);
+    void addSongFromLibrary(const QHash<QString, QString> hash);
+    void addArtistFromLibrary(const QList<QHash<QString, QString> > hashList);
 
     /* For Mediaplayer signals
      * durationChanged: Change of total playback time in ms of current media.
@@ -48,6 +49,12 @@ private slots:
     void jump(const QModelIndex &index);
     void playlistPositionChanged(int currentItem);
     void next();
+    void curMediaRemoved(int newCurMediaIdx);
+    void stop();
+    void clearPlaylist();
+    void setRepeatOne(bool);
+    void setRepeatAll(bool);
+    void setShuffle(bool);
 
     // General Player status slots
     void statusChanged(QMediaPlayer::MediaStatus status);
@@ -56,10 +63,6 @@ private slots:
 
     void displayErrorMessage();
 
-    // playlist basic controls
-    //void addToPlaylist(const QStringList &fileNames);
-    //void removeFromPlaylist(const QStringList &fileNames);
-
 private:
     void setTrackInfo(const QString &info);
     void setStatusInfo(const QString &info);
@@ -67,10 +70,10 @@ private:
     void updateDurationInfo(qint64 currentInfo);
 
     QMediaPlayer *player;
-    //QMediaPlaylist *playlist;
     QLabel *coverLabel;
     QSlider *slider;
     QLabel *labelDuration;
+    QLabel *curPlaylistLabel;
     PlaylistModel *playlistModel;
     PlaylistTable *playlistView;
     QString trackInfo;

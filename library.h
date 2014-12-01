@@ -21,10 +21,10 @@ private slots:
     void addToPlaylist(QModelIndex idx);
 
 signals:
-    void addToPlaylist(const QHash<QString, QString> hash);
+    void addSongToPlaylist(const QHash<QString, QString> hash);
+    void addArtistToPlaylist(const QList<QHash<QString, QString> > hashList);
 
 private:
     LibraryModel *libraryModel;
     LibraryView *libraryView;
-    QLabel *label;
 };

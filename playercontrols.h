@@ -13,6 +13,7 @@ class PlayerControls : public QWidget
 
 public:
     PlayerControls(QWidget *parent = 0);
+    ~PlayerControls();
 
     QMediaPlayer::State state() const;
     int volume() const;
