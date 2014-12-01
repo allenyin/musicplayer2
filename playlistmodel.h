@@ -52,8 +52,8 @@ public:
     const QMediaContent currentMedia(void);
     void setMode(int newMode, bool checked);
     void clear();
-    QString getCurAlbumArtist(void) const;
-    QString getCurTitle(void) const;
+    const QString getCurAlbumArtist(void) const;
+    const QString getCurTitle(void) const;
 
 private slots:
 

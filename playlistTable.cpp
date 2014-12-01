@@ -60,12 +60,11 @@ void PlaylistTable::contextMenuEvent(QContextMenuEvent* e) {
 void PlaylistTable::keyPressEvent(QKeyEvent *event) {
     // selectionMode must be contiguous
     if (event->key() == Qt::Key_Delete) {
-        QModelIndexList selected = selectionModel()->selectedRows();
-#if DEBUG_PLAYLISTVIEW
-        qDebug()<< "Delete key detected on" << selected;
-#endif
-        PlaylistModel *model = (PlaylistModel*)(QTableView::model());
-        model->removeMedia(selected.front().row(), selected.back().row());
+        if (selectionModel()->hasSelection()) {
+            QModelIndexList selected = selectionModel()->selectedRows();
+            PlaylistModel *model = (PlaylistModel*)(QTableView::model());
+            model->removeMedia(selected.front().row(), selected.back().row());
+        }
     }
     else {
         QTableView::keyPressEvent(event);

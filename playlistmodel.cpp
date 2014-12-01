@@ -299,6 +299,10 @@ void PlaylistModel::removeMedia(int start, int end) {
         }
     }
     endRemoveRows();
+    if (m_data.size() == 0) {
+        curMediaIdx = -1;
+        emit(curMediaRemoved(curMediaIdx));
+    }
 }
 
 const QMediaContent PlaylistModel::setCurMedia(int row){
@@ -418,14 +422,22 @@ void PlaylistModel::clear() {
     curMediaIdx = -1;
 }
 
-QString PlaylistModel::getCurAlbumArtist() const {
-    return QString("%1 - %2")
-        .arg(m_data[curMediaIdx]["Album"])
-        .arg(m_data[curMediaIdx]["Artist"]);
+const QString PlaylistModel::getCurAlbumArtist() const {
+    //qDebug() << "getCurAlbumArtist(): idx=" << curMediaIdx;
+    if (curMediaIdx >= 0) {
+        return QString("%1 - %2")
+            .arg(m_data[curMediaIdx]["Album"])
+            .arg(m_data[curMediaIdx]["Artist"]);
+    }
+    return QString();
 }
 
-QString PlaylistModel::getCurTitle() const {
-    return m_data[curMediaIdx]["Title"];
+const QString PlaylistModel::getCurTitle() const {
+    //qDebug() << "getCurTitle(): idx=" << curMediaIdx;
+    if (curMediaIdx >= 0) {
+        return m_data[curMediaIdx]["Title"];
+    }
+    return QString();
 }
 
 void PlaylistModel::beginRemoveItems(int start, int end) {
