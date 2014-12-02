@@ -26,6 +26,7 @@ TreeItem::TreeItem(const QHash<QString, QString> &data, ITEM_TYPE type, TreeItem
 
 TreeItem::~TreeItem() {
     qDeleteAll(childItems);
+    childItems.clear();
 }
 
 TreeItem::ITEM_TYPE TreeItem::getItemType() const {
@@ -67,21 +68,44 @@ TreeItem *TreeItem::findChildNode(const QString clue) const {
     return NULL;
 }
 
+int TreeItem::findChildIndex(const QString clue) const {
+    // returns where a child with a given clue is in this node's childList
+    QString clueType;
+    switch(itemType) {
+        case ROOT:
+            clueType = "Artist";
+            break;
+        case ARTIST:
+            clueType = "absFilePath";
+            break;
+        default:
+            return -1;
+    }
+    for (int i=0; i < childItems.size(); i++) {
+        if ((childItems[i]->getItemData())[clueType] == clue) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 TreeItem *TreeItem::child(int number) {
     return childItems.value(number);
 }
 
-int TreeItem::childCount() const {
+int TreeItem::ChildCount() const {
     return childItems.count();
 }
 
 int TreeItem::childNumber() const {
+    // returns where this node is this in its parent's childList
     if (parentItem) {
         return parentItem->childItems.indexOf(const_cast<TreeItem*>(this));
     }
 
     return 0;
 }
+
 
 int TreeItem::columnCount() const {
     //return itemData.count();
@@ -108,10 +132,11 @@ bool TreeItem::addChild(ITEM_TYPE type, QHash<QString, QString> data) {
 
     TreeItem *item = new TreeItem(data, type, this);
     childItems.append(item);
+    /*
     if (type == SONG) {
         // keep track of which songs have been fetched already.
         itemData[data["absFilePath"]] = 1;
-    }
+    }*/
     return true;
 }
 
@@ -126,6 +151,26 @@ bool TreeItem::removeChild(int position) {
 
     delete childItems.takeAt(position);
     return true;
+}
+
+bool TreeItem::insertChild(int position, ITEM_TYPE type, QHash<QString, QString> data) {
+    assert(type != ROOT);
+    itemTypeAssert(type, data);
+    TreeItem *item = new TreeItem(data, type, this);
+    childItems.insert(position, item);
+    return true;
+}
+
+QList<QString> TreeItem::childrenData() const {
+    if (ChildCount()==0) {
+        return QList<QString>();
+    }
+    QList<QString> dataList;
+    TreeItem *item;
+    foreach(item, childItems) {
+        dataList.append(item->data().toString());
+    }
+    return dataList;
 }
 
 void TreeItem::itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const {

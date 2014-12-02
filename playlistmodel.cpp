@@ -270,7 +270,7 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
             endInsertRows();
         }
     }
-    if (curMediaIdx < 0) {
+    if (curMediaIdx < 0 && start > 0) {
         curMediaIdx = 0;
         emit(mediaAvailable());
     }

@@ -10,11 +10,12 @@ class TreeItem {
         ~TreeItem();
 
         TreeItem *child(int number);
-        int childCount() const;
+        int ChildCount() const;
         int columnCount() const;
         QVariant data() const;
         bool addChild(ITEM_TYPE type, QHash<QString, QString> data);
         bool removeChild(int position);
+        bool insertChild(int position, ITEM_TYPE type, QHash<QString, QString> data);
         TreeItem *parent();
         int childNumber() const;
         ITEM_TYPE getItemType() const;
@@ -22,6 +23,8 @@ class TreeItem {
         QHash<QString, QString>& getItemData();
         void sortChildren();
         TreeItem *findChildNode(const QString clue) const;
+        int findChildIndex(const QString clue) const;
+        QList<QString> childrenData() const;
 
     private:
         void itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const;
