@@ -150,6 +150,8 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
             break; 
         } 
         changeMetaData(index);
+        qDebug() << "playlistModel::setData()";
+        emit(playlistMetaDataChange(m_data[row]));
         return true;
     }
     return false;
@@ -396,6 +398,10 @@ const QMediaContent PlaylistModel::previousMedia() {
 
 int PlaylistModel::getCurMediaIdx() const{
     return curMediaIdx;
+}
+
+QModelIndex PlaylistModel::getCurMediaModelIndex() const {
+    return index(curMediaIdx, 0);
 }
 
 int PlaylistModel::getColumns() const {

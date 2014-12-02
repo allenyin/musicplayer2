@@ -24,6 +24,7 @@ public:
     TreeItem *getItem(const QModelIndex &index) const;
     QHash<QString, QString> getSongInfo(const QModelIndex idx) const;
     QList<QHash<QString, QString> > getArtistSongInfo(const QModelIndex idx) const;
+    void updateLibrary(const QModelIndex &parent);
 
 protected:
     // inherited from QAbstractItemModel
@@ -44,6 +45,7 @@ protected:
 
 private slots:
     void addMusicFile(const QString absFilePath);
+    void playlistMetaDataChange(const QHash<QString,QString> newHash);
     
 private:
     QSqlError initDb();

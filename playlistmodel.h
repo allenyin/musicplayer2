@@ -22,6 +22,7 @@ public:
 
     // getters
     int getCurMediaIdx() const;
+    QModelIndex getCurMediaModelIndex() const;
     int getColumns() const;
     bool keepPlaying() const;
     
@@ -65,6 +66,7 @@ private slots:
 signals:
    void mediaAddedToPlaylist(QString);
    void mediaAvailable();
+   void playlistMetaDataChange(QHash<QString, QString>);  // should be caught by library to update database.
    void currentIndexChanged(int);
    void curMediaRemoved(int);
    void resetPlaylist();

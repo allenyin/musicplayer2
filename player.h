@@ -48,6 +48,7 @@ private slots:
     void previousClicked();
 
     // Player control for playlists
+    void play();
     void seek(int seconds);
     void jump(const QModelIndex &index);
     void playlistPositionChanged(int currentItem);

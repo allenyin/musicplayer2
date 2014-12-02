@@ -87,7 +87,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     controls->setVolume(player->volume());
     controls->setMuted(controls->isMuted());
 
-    connect(controls, SIGNAL(play()), player, SLOT(play()));
+    connect(controls, SIGNAL(play()), this, SLOT(play()));
     connect(controls, SIGNAL(pause()), player, SLOT(pause()));
     connect(controls, SIGNAL(stop()), this, SLOT(stop()));
     connect(controls, SIGNAL(next()), this, SLOT(next()));
@@ -264,6 +264,14 @@ void Player::stop() {
     qDebug() << "Clearing labelDuration in stop()";
     labelDuration->clear();
     player->setPosition(0);
+}
+
+void Player::play() {
+    // highlight the correct media, then play
+    if (player->isAudioAvailable()) {
+        playlistView->setCurrentIndex(playlistModel->getCurMediaModelIndex());
+        player->play();
+    }
 }
 
 void Player::seek(int seconds) {

@@ -47,6 +47,26 @@ void TreeItem::sortChildren() {
     }
 }
 
+TreeItem *TreeItem::findChildNode(const QString clue) const {
+    if (itemType == ROOT) {
+        TreeItem* child;
+        foreach(child, childItems) {
+            if (child->itemData["Artist"] == clue) {
+                return child;
+            }
+        }
+    }
+    if (itemType == ARTIST) {
+        TreeItem* child;
+        foreach(child, childItems) {
+            if (child->itemData["absFilePath"] == clue) {
+                return child;
+            }
+        }
+    }
+    return NULL;
+}
+
 TreeItem *TreeItem::child(int number) {
     return childItems.value(number);
 }

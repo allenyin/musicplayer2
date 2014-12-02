@@ -54,6 +54,7 @@ void MainWindow::setupWidgets() {
     connect(library, SIGNAL(addSongToPlaylist(QHash<QString, QString>)), player, SLOT(addSongFromLibrary(QHash<QString, QString>)));
     connect(library, SIGNAL(addArtistToPlaylist(QList<QHash<QString, QString> >)), player, SLOT(addArtistFromLibrary(QList<QHash<QString, QString> >)));
     connect(player->model(), SIGNAL(mediaAddedToPlaylist(QString)), library->model(), SLOT(addMusicFile(QString)));
+    connect(player->model(), SIGNAL(playlistMetaDataChange(QHash<QString, QString>)), library->model(), SLOT(playlistMetaDataChange(QHash<QString,QString>)));
 }
 
 void MainWindow::setupMenus() {

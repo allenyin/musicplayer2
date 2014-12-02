@@ -16,12 +16,12 @@ class TreeItem {
         bool addChild(ITEM_TYPE type, QHash<QString, QString> data);
         bool removeChild(int position);
         TreeItem *parent();
-        bool removeChildren(int position, int count);
         int childNumber() const;
         ITEM_TYPE getItemType() const;
         QHash<QString, QString> getItemData() const;
         QHash<QString, QString>& getItemData();
         void sortChildren();
+        TreeItem *findChildNode(const QString clue) const;
 
     private:
         void itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const;

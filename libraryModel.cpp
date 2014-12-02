@@ -101,20 +101,6 @@ void LibraryModel::showError(const QSqlError &err, const QString msg) {
     msgBox.exec();
 }
 
-void LibraryModel::addTestEntries() {
-    QSqlQuery q(db);
-    if (!q.prepare("INSERT INTO MUSICLIBRARY(absFilePath, fileName, Title, Artist, Album, Length) "
-              "VALUES (:absFilePath, :fileName, :Title, :Artist, :Album, :Length)")) {
-        qDebug() << "Error at preoparing query: " << q.lastError();
-    }
-
-    addEntry(q, "/home/file1", "file1", "song1", "singer1", "ablum1", 121);
-    addEntry(q, "/home/file2", "file2", "song2", "singe2", "album2", 122);
-    addEntry(q, "/home/file3", "file3", "song3", "singer3", "album3", 123);
-    addEntry(q, "/home/file4", "file4", "song4", "singer4", "album4", 124);
-    addEntry(q, "/home/file5", "file5", "song5", "singer5", "album5", 125);
-
-}
 
 bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QString &fileName,
         const QString &title, const QString &artist, const QString &album, const int length) {
@@ -132,10 +118,14 @@ bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
     if (!item_counts.contains(artist)) {
         QHash<QString, QString> hash;
         hash["Artist"] = artist;
-        //rootItem->addChild(TreeItem::ARTIST, hash);
+        //updateLibrary(QModelIndex());
         fetchMore(QModelIndex());
+        return true;
+    } else {
+        // do i need to do updateLibrary here???
+        item_counts[artist] += 1;
+        return true;
     }
-    item_counts[artist] += 1;
     return false;
 }
 
@@ -233,8 +223,8 @@ bool LibraryModel::canFetchMore(const QModelIndex &parent) const {
     TreeItem *parentItem = getItem(parent);
     switch (parentItem->getItemType()) {
         case TreeItem::ROOT:
-            qDebug() << "canFetchMore ROOT";
-            qDebug() << "item_counts: " << item_counts.size() << " childCount()" << parentItem->childCount();
+            //qDebug() << "canFetchMore ROOT";
+            //qDebug() << "item_counts: " << item_counts.size() << " childCount()" << parentItem->childCount();
             return (item_counts.size() > parentItem->childCount()) ? true : false;
         case TreeItem::ARTIST: {
             QString Artist = parentItem->getItemData()["Artist"];
@@ -250,10 +240,13 @@ bool LibraryModel::canFetchMore(const QModelIndex &parent) const {
 }
 
 void LibraryModel::fetchMore(const QModelIndex &parent) {
+    // we are assumping that we don't have too many items here, s
+    // updating all isn't super bad.
     TreeItem *parentItem = getItem(parent);
     // if we need to display more artists. 
     if (parentItem->getItemType() == TreeItem::ROOT) {
-        int remainder = item_counts.size()-(parentItem->childCount());
+        qDebug() << "fetchMore(ROOT)";
+        int remainder = item_counts.size() - (parentItem->childCount());
         int itemsToFetch = qMin(100, remainder);
         QSqlQuery q(db);
         if (!q.exec(QLatin1String("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
@@ -271,6 +264,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
             }
         }
         parentItem->sortChildren();
+        qDebug()<<"fetchMore endInsertRows()";
         endInsertRows();
     }
 
@@ -299,6 +293,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
             }
         }
         parentItem->sortChildren();
+        qDebug()<<"fetchMore endInsertRows()";
         endInsertRows();
     }
 }
@@ -306,7 +301,6 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
 void LibraryModel::addFromDir(const QString & dir) {
     QDirIterator it(dir, QDirIterator::Subdirectories);
     while (it.hasNext()) {
-        //qDebug() << "Current file: " << it.next();
         it.next();
         QFileInfo fileInfo = it.fileInfo();
         if (fileInfo.fileName() == "." || fileInfo.fileName() == "..") {
@@ -319,6 +313,7 @@ void LibraryModel::addFromDir(const QString & dir) {
         if (suffix == "mp3" || suffix == "ogg" || suffix == "raw" || suffix == "wav" || suffix == "wma" || suffix == "mpg") {
             beginInsertRows(QModelIndex(), item_counts.size(), item_counts.size());
             addMusicFile(fileInfo);
+            qDebug()<<"addFromDir endInsertRows()";
             endInsertRows();
         }
     }
@@ -367,6 +362,55 @@ bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
         qDebug() << "Error at addMusicFile() - preparing query: " << q.lastError();
     }
     return addEntry(q, absFilePath, fileName, title, artist, album, length);
+}
+
+void LibraryModel::playlistMetaDataChange(const QHash<QString,QString> newHash) {
+    // metadata has been changed in playlist, change it in the database as well.
+    // locate the database entry associated with item
+    QSqlQuery q(db);
+    if (!q.exec(QString("SELECT Artist, Length FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(newHash["absFilePath"]))) {
+        qDebug() << "Error SELECT Artist in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
+        return;
+    }
+    q.next();
+    QString oldArtist = q.value(0).toString();
+    int oldLength = q.value(1).toInt();
+    
+    // delete old database entry
+    if (!q.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(newHash["absFilePath"]))) {
+        qDebug() << "Error DELETING row in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
+        return;
+    }
+    item_counts[oldArtist]--;
+    
+    // locate the Song node associated with item
+    TreeItem *oldArtistNode = rootItem->findChildNode(oldArtist);
+    TreeItem *songNode = oldArtistNode->findChildNode(newHash["absFilePath"]);
+    if (songNode) {
+        // delete Song node if the node has been found
+        qDebug() << "Trying to remove song node where title is: " << songNode->data();
+        QModelIndex oldArtistNodeIndex = index(oldArtistNode->childNumber(), 0, QModelIndex());
+        int rowOfSong = songNode->childNumber();
+        qDebug() << "Removing song node where title is: " << songNode->data();
+        beginRemoveRows(oldArtistNodeIndex, rowOfSong, rowOfSong);
+        oldArtistNode->removeChild(rowOfSong);
+        endRemoveRows();
+        if (item_counts[oldArtist] <= 0) {
+            int rowOfArtist = oldArtistNode->childNumber();
+            beginRemoveRows(QModelIndex(), rowOfArtist, rowOfArtist);
+            rootItem->removeChild(rowOfArtist);
+            item_counts.remove(oldArtist);
+            endRemoveRows();
+        }
+    }
+    // change database Entry
+    addEntry(q, newHash["absFilePath"], newHash["fileName"], newHash["Title"], newHash["Artist"], 
+             newHash["Album"], oldLength);
+}
+
+void LibraryModel::updateLibrary(const QModelIndex &parent) {
+    TreeItem *parentItem = getItem(parent);
+    // if need to update artists
 }
 
 QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) const {
