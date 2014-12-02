@@ -69,14 +69,15 @@ PlayerControls::PlayerControls(QWidget *parent) :
     layout->addWidget(previousButton);
     layout->addWidget(playButton);
     layout->addWidget(nextButton);
-    layout->addWidget(muteButton);
     layout->addStretch();
     layout->setSpacing(0);
 
     QBoxLayout *rightEndLayout = new QHBoxLayout;
     rightEndLayout->setDirection(QBoxLayout::RightToLeft);
     rightEndLayout->addWidget(rateBox);
+    rightEndLayout->setSpacing(2);
     rightEndLayout->addWidget(volumeSlider);
+    rightEndLayout->addWidget(muteButton);
 
     layout->addLayout(rightEndLayout);
     setLayout(layout);
