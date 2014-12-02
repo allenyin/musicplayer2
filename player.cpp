@@ -241,6 +241,7 @@ void Player::curMediaRemoved(int newCurMediaIdx) {
         qDebug() << "Player: curMediaRemoved, set media to none!";
         playlistView->setCurrentIndex(QModelIndex());
         player->setMedia(QMediaContent());
+        emit(changeTitle("AAMusicPlayer"));
     }
 }
 
@@ -337,10 +338,10 @@ void Player::audioAvailableChanged(bool available)
 }
 
 void Player::metaDataChanged() {
-    qDebug() << "metaDataChanged()";
     if (player->isMetaDataAvailable()) {
         QString title = playlistModel->getCurTitle();
         QString albumArtist = playlistModel->getCurAlbumArtist();
+        qDebug() << "metaDataChanged loop: title=" << title << ", albumArtist=" << albumArtist;
         if (!title.isNull() && !albumArtist.isNull()) {
             setTrackInfo(QString("%1 - %2").arg(title).arg(albumArtist));
         }
@@ -352,14 +353,12 @@ void Player::metaDataChanged() {
 
 void Player::setTrackInfo(const QString &info) {
     trackInfo = info;
-    if (!statusInfo.isEmpty()) {
-        emit(changeTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo)));
+    if (trackInfo.isNull()) {
+        emit(changeTitle("AAMusicPlayer"));
     }
     else {
-        if (!trackInfo.isNull()) {
-            emit(changeTitle(trackInfo));
-        } else {
-            emit(changeTitle("AAMusicPlayer"));
+        if (!statusInfo.isEmpty()) {
+            emit(changeTitle(QString("%1 | %2").arg(trackInfo).arg(statusInfo)));
         }
     }
 }

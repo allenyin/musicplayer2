@@ -20,12 +20,12 @@ LibraryView::~LibraryView() {
     // nothing to destroy specifically yet
 }
 
-void LibraryView::mouseDoubleClickEvent(QMouseEvent* e) {
-    QPoint clickPos = e->pos();
+void LibraryView::mouseDoubleClickEvent(QMouseEvent* event) {
+    QPoint clickPos = event->pos();
     const QModelIndex clickIdx = QTreeView::indexAt(clickPos);
     qDebug()<< "Double click at (" << clickPos.x() << ", " << clickPos.y() << ")";
     qDebug()<< "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")";
-    emit QTreeView::activated(clickIdx);
+    emit(QTreeView::activated(clickIdx));
 }
 
 void LibraryView::dragEnterEvent(QDragEnterEvent *event) {
@@ -46,6 +46,9 @@ void LibraryView::dragMoveEvent(QDragMoveEvent *event) {
     else {
         event->ignore();
     }
+}
+
+void LibraryView::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 
