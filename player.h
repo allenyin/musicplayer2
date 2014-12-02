@@ -23,6 +23,9 @@ public:
     Player(QWidget *parent=0);
     ~Player();
 
+    // getters
+    PlaylistModel *model();
+
 signals:
     // no signals so far
     void changeTitle(QString);
@@ -50,6 +53,7 @@ private slots:
     void playlistPositionChanged(int currentItem);
     void next();
     void curMediaRemoved(int newCurMediaIdx);
+    void mediaAvailable();
     void stop();
     void clearPlaylist();
     void setRepeatOne(bool);

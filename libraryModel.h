@@ -42,6 +42,8 @@ protected:
     virtual QMimeData* mimeData(const QModelIndexList &indexes) const;
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
+private slots:
+    void addMusicFile(const QString absFilePath);
     
 private:
     QSqlError initDb();

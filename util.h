@@ -15,4 +15,5 @@ public:
 
     // convert from song length in seconds to min:sec format QString
     QString convert_length_format(int l);
-};
+
+    };

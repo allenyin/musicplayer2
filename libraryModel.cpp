@@ -132,7 +132,8 @@ bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
     if (!item_counts.contains(artist)) {
         QHash<QString, QString> hash;
         hash["Artist"] = artist;
-        rootItem->addChild(TreeItem::ARTIST, hash);
+        //rootItem->addChild(TreeItem::ARTIST, hash);
+        fetchMore(QModelIndex());
     }
     item_counts[artist] += 1;
     return false;
@@ -232,6 +233,8 @@ bool LibraryModel::canFetchMore(const QModelIndex &parent) const {
     TreeItem *parentItem = getItem(parent);
     switch (parentItem->getItemType()) {
         case TreeItem::ROOT:
+            qDebug() << "canFetchMore ROOT";
+            qDebug() << "item_counts: " << item_counts.size() << " childCount()" << parentItem->childCount();
             return (item_counts.size() > parentItem->childCount()) ? true : false;
         case TreeItem::ARTIST: {
             QString Artist = parentItem->getItemData()["Artist"];
@@ -257,7 +260,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
             qDebug() << "At fetchMore (ROOT): " << q.lastError();
             return;
         }
-        beginInsertRows(parent, item_counts.size(), item_counts.size()+itemsToFetch-1);
+        beginInsertRows(parent, 0, item_counts.size()+itemsToFetch-1);
         while (q.next()) {
             QString Artist = q.value(0).toString();
             if (!item_counts.contains(Artist)) {
@@ -267,6 +270,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
                 item_counts[Artist] = 1;
             }
         }
+        parentItem->sortChildren();
         endInsertRows();
     }
 
@@ -294,6 +298,7 @@ void LibraryModel::fetchMore(const QModelIndex &parent) {
                 item_counts[Artist] += 1;
             }
         }
+        parentItem->sortChildren();
         endInsertRows();
     }
 }
@@ -311,7 +316,7 @@ void LibraryModel::addFromDir(const QString & dir) {
             addFromDir(fileInfo.canonicalFilePath());
         }
         QString suffix = fileInfo.completeSuffix();
-        if (suffix == "mp3" || suffix == "ogg" || suffix == "raw" || suffix == "wav" || suffix == "wma") {
+        if (suffix == "mp3" || suffix == "ogg" || suffix == "raw" || suffix == "wav" || suffix == "wma" || suffix == "mpg") {
             beginInsertRows(QModelIndex(), item_counts.size(), item_counts.size());
             addMusicFile(fileInfo);
             endInsertRows();
@@ -319,6 +324,13 @@ void LibraryModel::addFromDir(const QString & dir) {
     }
     qDebug() << "Finishing importing from folder";
 }
+
+void LibraryModel::addMusicFile(const QString absFilePath) {
+    // slot used to add music files that was added to playlist by loading them directly
+    QFileInfo fileInfo(absFilePath);
+    addMusicFile(fileInfo);
+}
+
 
 bool LibraryModel::addMusicFile(QFileInfo & fileInfo) {
     // return true if insertion successfull,

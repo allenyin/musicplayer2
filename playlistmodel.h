@@ -63,7 +63,8 @@ private slots:
     void changeMetaData(QModelIndex index);
 
 signals:
-   void mediaAdded();
+   void mediaAddedToPlaylist(QString);
+   void mediaAvailable();
    void currentIndexChanged(int);
    void curMediaRemoved(int);
    void resetPlaylist();

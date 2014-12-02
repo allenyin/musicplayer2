@@ -33,6 +33,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     connect(playlistView, SIGNAL(activated(QModelIndex)), this, SLOT(jump(QModelIndex)));
     connect(playlistModel, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
     connect(playlistModel, SIGNAL(curMediaRemoved(int)), SLOT(curMediaRemoved(int)));
+    connect(playlistModel, SIGNAL(mediaAvailable()), SLOT(mediaAvailable()));
 
     // buttons for playback mode, and playlist actions
     curPlaylistLabel = new QLabel(this);
@@ -166,6 +167,10 @@ Player::~Player() {
     delete player;
 }
 
+PlaylistModel *Player::model() {
+    return playlistModel;
+}
+
 
 //--------------------Slots---------------------
 void Player::open() {
@@ -237,6 +242,11 @@ void Player::curMediaRemoved(int newCurMediaIdx) {
         playlistView->setCurrentIndex(QModelIndex());
         player->setMedia(QMediaContent());
     }
+}
+
+void Player::mediaAvailable() {
+    qDebug() << "Player: mediaAvailable";
+    player->setMedia(playlistModel->currentMedia());
 }
 
 void Player::clearPlaylist() {

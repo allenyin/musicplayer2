@@ -264,11 +264,13 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
             beginInsertRows(QModelIndex(), start, start);
             m_data.append(hash);
             start = start+1;
+            emit(mediaAddedToPlaylist(hash["absFilePath"]));
             endInsertRows();
         }
     }
     if (curMediaIdx < 0) {
         curMediaIdx = 0;
+        emit(mediaAvailable());
     }
 }
 
@@ -279,6 +281,7 @@ void PlaylistModel::addMedia(const QHash<QString, QString> libraryItem) {
     endInsertRows();
     if (curMediaIdx < 0) {
         curMediaIdx = 0;
+        emit(mediaAvailable());
     }
 }
 

@@ -1,4 +1,6 @@
 #include "mainWindow.h"
+#include "playlistmodel.h"
+#include "libraryModel.h"
 #include <QMenu>
 #include <QMenuBar>
 #include <QApplication>
@@ -51,6 +53,7 @@ void MainWindow::setupWidgets() {
     // signal connections.
     connect(library, SIGNAL(addSongToPlaylist(QHash<QString, QString>)), player, SLOT(addSongFromLibrary(QHash<QString, QString>)));
     connect(library, SIGNAL(addArtistToPlaylist(QList<QHash<QString, QString> >)), player, SLOT(addArtistFromLibrary(QList<QHash<QString, QString> >)));
+    connect(player->model(), SIGNAL(mediaAddedToPlaylist(QString)), library->model(), SLOT(addMusicFile(QString)));
 }
 
 void MainWindow::setupMenus() {

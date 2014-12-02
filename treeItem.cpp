@@ -40,6 +40,13 @@ QHash<QString, QString>& TreeItem::getItemData() {
     return itemData;
 }
 
+void TreeItem::sortChildren() {
+    // sort the childItems pointers alphabetically.
+    if (itemType == ROOT || itemType == ARTIST) {
+        qSort(childItems.begin(), childItems.end(), PtrLess<TreeItem>());
+    }
+}
+
 TreeItem *TreeItem::child(int number) {
     return childItems.value(number);
 }

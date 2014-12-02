@@ -1,5 +1,4 @@
 #pragma once
-
 #include <QList>
 #include <QVariant>
 #include <QHash>
@@ -22,7 +21,7 @@ class TreeItem {
         ITEM_TYPE getItemType() const;
         QHash<QString, QString> getItemData() const;
         QHash<QString, QString>& getItemData();
-
+        void sortChildren();
 
     private:
         void itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const;
@@ -32,3 +31,14 @@ class TreeItem {
         QHash<QString, QString> itemData;
         TreeItem *parentItem;
 };
+
+template <typename T>
+struct PtrLess {
+    bool operator()(const T* a, const T* b) const {
+        return a->data().toString() < b->data().toString();
+    }
+};
+
+
+
+

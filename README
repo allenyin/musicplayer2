@@ -1,6 +1,6 @@
 Required packages:
 
-1) qt-default media player codec (ffmpeg?)
+1) qt-default media player codec: dpkg-query -l '*gstreamer*'
 2) taglib 1.9.1 (latest)
 3) sqlite3
 
