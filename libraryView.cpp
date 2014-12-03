@@ -5,6 +5,7 @@
 class LibraryModel;
 
 LibraryView::LibraryView(QWidget *parent) : QTreeView(parent) {
+    setEditTriggers(QAbstractItemView::EditKeyPressed);
     setSelectionBehavior(QAbstractItemView::SelectItems);
     setAnimated(false);
     resizeColumnToContents(0);
@@ -18,6 +19,10 @@ LibraryView::LibraryView(QWidget *parent) : QTreeView(parent) {
 
 LibraryView::~LibraryView() {
     // nothing to destroy specifically yet
+}
+
+void LibraryView::keyPressEvent(QKeyEvent *event) {
+    QTreeView::keyPressEvent(event);
 }
 
 void LibraryView::mouseDoubleClickEvent(QMouseEvent* event) {
@@ -47,12 +52,3 @@ void LibraryView::dragMoveEvent(QDragMoveEvent *event) {
         event->ignore();
     }
 }
-
-void LibraryView::contextMenuEvent(QContextMenuEvent *event) {
-}
-
-
-
-
-
-

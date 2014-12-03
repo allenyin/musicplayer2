@@ -173,6 +173,10 @@ QList<QString> TreeItem::childrenData() const {
     return dataList;
 }
 
+const QList<TreeItem*> & TreeItem::getChildItems() const {
+    return childItems;
+}
+
 void TreeItem::itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const {
     switch (type) {
         case ARTIST:

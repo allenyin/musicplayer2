@@ -251,19 +251,17 @@ QModelIndex LibraryModel::parent(const QModelIndex &index) const {
 }
 
 QVariant LibraryModel::data(const QModelIndex &index, int role) const {
-    //qDebug() << "In data():";
-    //qDebug() << "QModelIndex &index is: " << index << ", row=" << index.row() << " col=" << index.column();
     
     if (!index.isValid()) {
         return QVariant();
     }
 
-    if (role != Qt::DisplayRole) {
-        return QVariant();
+    if (role == Qt::DisplayRole || role == Qt::EditRole) {
+        TreeItem *item = getItem(index);
+        return item->data();
     }
 
-    TreeItem *item = getItem(index);
-    return item->data();
+    return QVariant();
 }
 
 bool LibraryModel::hasChildren(const QModelIndex &parent) const {
@@ -421,6 +419,7 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
         else {
             QList<QString> existingSongs = artistNode->childrenData();
             existingSongs.append(title);
+            qSort(existingSongs);
             songIndex = existingSongs.indexOf(title);
         }
         // insert the songNode
@@ -464,6 +463,16 @@ void LibraryModel::playlistMetaDataChange(QHash<QString, QString> newHash) {
         qDebug() << "Error in SLOT:playlistMetaDataChange() - adding new entry failed!";
     }
     qDebug() << "Error in SLOT:playlistMetaDataChange() - removing old song node failed!";
+}
+
+bool LibraryModel::removeEntryFromModel(QString &absFilePath, QString &artist) {
+    QSqlQuery q(db);
+    if (!q.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
+        qDebug() << "Error removeEntryFromModel() - Executing query: " << q.lastError();
+        return false;
+    }
+    // delete the node associated with it from library
+    return removeSongNode(artist, absFilePath);
 }
 
 bool LibraryModel::removeSongNode(const QString &artist, const QString &absFilePath) {
@@ -571,7 +580,86 @@ Qt::ItemFlags LibraryModel::flags(const QModelIndex &index) const {
         return Qt::ItemIsEnabled;
     }
     else {
-        return QAbstractItemModel::flags(index) | Qt::ItemIsDragEnabled;
+        return QAbstractItemModel::flags(index) | Qt::ItemIsDragEnabled | Qt::ItemIsEditable;
+    }
+}
+
+bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    if (index.isValid() && role == Qt::EditRole) {
+        if (index.parent() == QModelIndex()) {
+            // clicked on an artist node
+            QString newArtist = value.toString();
+            QString oldArtist = data(index).toString();
+            
+            // for each song node, get their information
+            TreeItem *artistItem = getItem(index);
+            QList<QString> absFilePathList;
+            TreeItem *item;
+            foreach(item, artistItem->getChildItems()) {
+                absFilePathList.append(item->getItemData()["absFilePath"]);
+            }
+
+            for (int i=0; i < absFilePathList.size(); i++) {
+                // change the metadata
+                changeMetaData(1, absFilePathList[i], newArtist);
+
+                // delete the node and database associated
+                if (!removeEntryFromModel(absFilePathList[i], oldArtist)) {
+                    return false;
+                }
+
+                // add the new node
+                QFileInfo fileInfo(absFilePathList[i]);
+                if (!addMusicFromFile(fileInfo)) {
+                    return false;
+                }
+
+            }
+            return true;
+        }
+        else {
+            // clicked on a song node
+            TreeItem *item = getItem(index);
+            QString absFilePath = item->getItemData()["absFilePath"];
+            
+            // change MetaData of the actual file
+            changeMetaData(0, absFilePath, value.toString());
+
+            // delete the node and database entry associated.
+            QString artist = item->parent()->data().toString();
+            if (removeEntryFromModel(absFilePath, artist)) {
+                // add the new node
+                QFileInfo fileInfo(absFilePath);
+                return addMusicFromFile(fileInfo);
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
+void LibraryModel::changeMetaData(int field, QString absFilePath, QString value) {
+    // field=0 -> change Title
+    // field=1 -> change Artist
+    QByteArray byteArray = absFilePath.toUtf8();
+    const char* cString = byteArray.constData();
+    TagLib::String tagValue = TagLib::String(value.toUtf8().constData());
+    TagLib::FileRef f(cString);
+    if (!f.isNull() && f.tag()) {
+        switch(field) {
+            case 0:
+                    //change title
+                    f.tag()->setTitle(tagValue);
+                    break;
+            case 1:
+                    // change artist
+                    f.tag()->setArtist(tagValue);
+                    break;
+            default:
+                    return;
+        }
+        f.file()->save();
+        return;
     }
 }
         

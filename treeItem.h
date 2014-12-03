@@ -25,6 +25,7 @@ class TreeItem {
         TreeItem *findChildNode(const QString clue) const;
         int findChildIndex(const QString clue) const;
         QList<QString> childrenData() const;
+        const QList<TreeItem*> &getChildItems() const;
 
     private:
         void itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const;

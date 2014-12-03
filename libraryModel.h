@@ -35,14 +35,14 @@ protected:
     virtual QModelIndex parent(const QModelIndex &index) const;
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
-    // for dynamic fetching
+    // for dynamic fetching...kinda obsolete
     virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
-    //virtual bool canFetchMore(const QModelIndex &parent) const;
-    //virtual void fetchMore(const QModelIndex &parent);
 
-    // drag and drop support with playlist
+    // drag and drop support with playlist, and editing library entries
     virtual QMimeData* mimeData(const QModelIndexList &indexes) const;
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role);
+    void changeMetaData(int field, QString absFilePath, QString value);
 
 private slots:
     void addMusicFromPlaylist(const QString absFilePath);
@@ -55,7 +55,6 @@ private:
     QSqlError populateFromDirs();
     void addArtistAndSongs(int artistCount, QString Artist, QList<QHash<QString, QString> > &validSongs);
     void showError(const QSqlError &err, const QString msg);
-    void addTestEntries();
     /*
      * addEntry is adding an entry to database.
      * addMusicFile is create a database entry from an actual file.
@@ -64,6 +63,7 @@ private:
                   const QString &title, const QString &artist, const QString &album, const int length);
     bool addMusicFromFile(QFileInfo &fileInfo);
     bool addEntryToModel(QString &absFilePath, QString &fileName, QString &title, QString &artist, QString &album, int length);
+    bool removeEntryFromModel(QString &absFilePath, QString &artist);
     bool removeSongNode(const QString &artist, const QString &absFilePath);
     Util *u;
     TreeItem *rootItem;
