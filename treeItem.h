@@ -8,6 +8,7 @@ class TreeItem {
         enum ITEM_TYPE {ROOT, ARTIST, SONG};
         TreeItem(const QHash<QString, QString> &data, ITEM_TYPE type, TreeItem *parent = 0);
         ~TreeItem();
+        void setParentItem(TreeItem *item);
 
         TreeItem *child(int number);
         int ChildCount() const;
@@ -16,6 +17,7 @@ class TreeItem {
         bool addChild(ITEM_TYPE type, QHash<QString, QString> data);
         bool removeChild(int position);
         bool insertChild(int position, ITEM_TYPE type, QHash<QString, QString> data);
+        bool insertChildItem(int position, ITEM_TYPE type, TreeItem *item);
         TreeItem *parent();
         int childNumber() const;
         ITEM_TYPE getItemType() const;
@@ -26,6 +28,7 @@ class TreeItem {
         int findChildIndex(const QString clue) const;
         QList<QString> childrenData() const;
         const QList<TreeItem*> &getChildItems() const;
+        QList<TreeItem*> &getChildItems();
 
     private:
         void itemTypeAssert(ITEM_TYPE type, QHash<QString, QString> &data) const;

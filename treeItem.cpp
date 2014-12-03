@@ -29,6 +29,10 @@ TreeItem::~TreeItem() {
     childItems.clear();
 }
 
+void TreeItem::setParentItem(TreeItem *item) {
+    parentItem = item;
+}
+
 TreeItem::ITEM_TYPE TreeItem::getItemType() const {
     return itemType;
 }
@@ -161,6 +165,13 @@ bool TreeItem::insertChild(int position, ITEM_TYPE type, QHash<QString, QString>
     return true;
 }
 
+bool TreeItem::insertChildItem(int position, ITEM_TYPE type, TreeItem *item) {
+    assert(type != ROOT);
+    itemTypeAssert(type, item->getItemData());
+    childItems.insert(position, item);
+    return true;
+}
+
 QList<QString> TreeItem::childrenData() const {
     if (ChildCount()==0) {
         return QList<QString>();
@@ -174,6 +185,11 @@ QList<QString> TreeItem::childrenData() const {
 }
 
 const QList<TreeItem*> & TreeItem::getChildItems() const {
+    return childItems;
+}
+
+QList<TreeItem*> & TreeItem::getChildItems() {
+    // non-const version, childItems will be modified
     return childItems;
 }
 

@@ -65,6 +65,8 @@ private:
     bool addEntryToModel(QString &absFilePath, QString &fileName, QString &title, QString &artist, QString &album, int length);
     bool removeEntryFromModel(QString &absFilePath, QString &artist);
     bool removeSongNode(const QString &artist, const QString &absFilePath);
+    bool batchMoveSongNodes(QString newArtist, TreeItem *oldArtistNode, const QModelIndex &oldArtistIndex, int numSongs);
+    bool insertArtistNode(QString newArtist);
     Util *u;
     TreeItem *rootItem;
     QSqlDatabase db;

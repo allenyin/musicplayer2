@@ -390,6 +390,7 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
     if (q.exec(QString("INSERT INTO MUSICLIBRARY(absFilePath, fileName, Title, Artist, Album, Length) VALUES ('%1', '%2', '%3', '%4', '%5', %6)")
                 .arg(absFilePath).arg(fileName).arg(title).arg(artist).arg(album).arg(length))) {
         // entry inserted successfully, check if there are items in the model already
+        /*
         if (!item_counts.contains(artist)) {
             // insert artist node if doesn't exist
             QList<QString> keys = item_counts.keys();
@@ -405,7 +406,9 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
             rootItem->insertChild(newArtistIdx, TreeItem::ARTIST, hash);
             item_counts[artist] = 0;
             endInsertRows();
-        }
+        }*/
+
+        insertArtistNode(artist);
         // insert song node by:
         // find the artistNode
         int artistIndex = rootItem->findChildIndex(artist);
@@ -602,20 +605,16 @@ bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int 
             for (int i=0; i < absFilePathList.size(); i++) {
                 // change the metadata
                 changeMetaData(1, absFilePathList[i], newArtist);
-
-                // delete the node and database associated
-                if (!removeEntryFromModel(absFilePathList[i], oldArtist)) {
-                    return false;
-                }
-
-                // add the new node
-                QFileInfo fileInfo(absFilePathList[i]);
-                if (!addMusicFromFile(fileInfo)) {
-                    return false;
-                }
-
             }
-            return true;
+            // update the database entries
+            QSqlQuery q(db);
+            if (!q.exec(QString("UPDATE MUSICLIBRARY SET Artist='%1' WHERE Artist='%2'").arg(newArtist).arg(oldArtist))) {
+                qDebug() << "Error@setData(): Batch updating database entries artist columns failed: " << q.lastError();
+                return false;
+            }
+            
+            // move all the nodes over and delete the oldArtist node
+            return batchMoveSongNodes(newArtist, artistItem, index, absFilePathList.size());
         }
         else {
             // clicked on a song node
@@ -636,6 +635,64 @@ bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int 
         }
     }
     return false;
+}
+
+bool LibraryModel::batchMoveSongNodes(QString newArtist, TreeItem *oldArtistNode, const QModelIndex &oldArtistIndex, int numSongs) {
+    beginRemoveRows(oldArtistIndex, 0, numSongs-1);
+    // move the pointers to children song node to temporary storage.
+    QList<TreeItem *> orphans;
+    oldArtistNode->getChildItems().swap(orphans); // orphans now contains pointers to the songNodes
+    endRemoveRows();
+    
+    beginRemoveRows(QModelIndex(), oldArtistIndex.row(), oldArtistIndex.row());
+    // remove library record for oldArtist
+    item_counts.remove(oldArtistNode->data().toString());
+    // remove old artist node
+    rootItem->removeChild(oldArtistIndex.row());
+    endRemoveRows();
+
+    // at this point the orphans' parentItem pointers are invalid,
+    // this will be fixed in the next for loop.
+
+    // create the newArtistNode if doesn't exist
+    insertArtistNode(newArtist);
+
+    // vars needed in loop to finish connecting the orphans back
+    QModelIndex newArtistIdx = index(rootItem->findChildIndex(newArtist),0);
+    TreeItem *newArtistNode = rootItem->findChildNode(newArtist);
+    TreeItem *item;
+    QList<QString> existingSongs;
+    int newSongIdx;
+    foreach(item, orphans) {
+        existingSongs = newArtistNode->childrenData();
+        existingSongs.append(item->data().toString());
+        qSort(existingSongs);
+        newSongIdx = existingSongs.indexOf(item->data().toString());
+        beginInsertRows(newArtistIdx, newSongIdx, newSongIdx);
+        newArtistNode->insertChildItem(newSongIdx, TreeItem::SONG, item);
+        item->setParentItem(newArtistNode);
+        item_counts[newArtist]++;
+        endInsertRows();
+    }
+    return true;
+}
+
+bool LibraryModel::insertArtistNode(QString newArtist) {
+    // insert an Artist node if it doesn't exist already, set item_counts[newArtist] = 0 after
+    if (!item_counts.contains(newArtist)) {
+        QList<QString> keys = item_counts.keys();
+        keys.append(newArtist);
+        qSort(keys);
+        int newArtistIdx = keys.indexOf(newArtist);
+        beginInsertRows(QModelIndex(), newArtistIdx, newArtistIdx);
+        QHash<QString, QString> hash;
+        hash["Artist"] = newArtist;
+        rootItem->insertChild(newArtistIdx, TreeItem::ARTIST, hash);
+        item_counts[newArtist] = 0;
+        endInsertRows();
+        return true;
+    }
+    return true;
 }
 
 void LibraryModel::changeMetaData(int field, QString absFilePath, QString value) {
