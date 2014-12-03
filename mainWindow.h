@@ -30,6 +30,7 @@ private:
     QMenu *fileMenu;
     QAction *exitAction;
     QAction *importFromFolderAction;
+    QAction *refreshLibraryAction;
     //QAction *importFileAction;
     void setupWidgets();
     void setupMenus();

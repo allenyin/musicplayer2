@@ -12,10 +12,12 @@
 
 LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
     u = new Util();
+    getImportDirs();    // populate importDirs with preferred music directories.
     if (!QSqlDatabase::drivers().contains("QSQLITE")) {
         QMessageBox msgBox;
         msgBox.setText("Unable to load database, Library needs the SQLITE driver");
         msgBox.exec();
+        return;
     }
     QSqlError err = initDb();
     if (err.type() != QSqlError::NoError) {
@@ -23,12 +25,16 @@ LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
         return;
     }
     
-    err = populateModel();
+    // populate library from database, while deleting invalid database entries.
+    err = populateModel(); 
     if (err.type() != QSqlError::NoError) {
         showError(err, "Populating model failed");
         return;
     }
 
+    // update the library and database from the preferred dirs, in case new files are added.
+    err = populateFromDirs();
+    assert(err.type() == QSqlError::NoError);
 }
 
 LibraryModel::~LibraryModel() {
@@ -36,6 +42,30 @@ LibraryModel::~LibraryModel() {
     db.close();
 }
 
+void LibraryModel::getImportDirs() {
+    QFile config_file("AAMusicPlayer_CONFIG.txt");
+    if (!config_file.exists()) {
+        // create one if not there
+        config_file.open(QIODevice::WriteOnly | QIODevice::Text);
+        return;
+    }
+    // read it otherwise
+    assert(config_file.open(QIODevice::ReadOnly | QIODevice::Text));
+    QTextStream in(&config_file);
+    while (!in.atEnd()) {
+        importDirs.append(in.readLine());
+    }
+}
+
+void LibraryModel::addImportDirs(const QString &dir) {
+    if (!importDirs.contains(dir)) {
+        QFile config_file("AAMusicPlayer_CONFIG.txt");
+        assert(config_file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text));
+        QTextStream out(&config_file);
+        out << dir << "\n";
+    }
+}
+    
 QSqlError LibraryModel::initDb() {
     
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -261,93 +291,37 @@ TreeItem *LibraryModel::getItem(const QModelIndex &index) const {
     return rootItem;
 }
 
-/*
-bool LibraryModel::canFetchMore(const QModelIndex &parent) const {
-    TreeItem *parentItem = getItem(parent);
-    switch (parentItem->getItemType()) {
-        case TreeItem::ROOT:
-            //qDebug() << "canFetchMore ROOT";
-            //qDebug() << "item_counts: " << item_counts.size() << " childCount()" << parentItem->childCount();
-            return (item_counts.size() > parentItem->childCount()) ? true : false;
-        case TreeItem::ARTIST: {
-            QString Artist = parentItem->getItemData()["Artist"];
-            qDebug() << "canFetchMore Artist=" << Artist;
-            qDebug() << "item_counts[" << Artist << "]=" << item_counts[Artist];
-            return (item_counts[Artist] > parentItem->childCount());
-                               }
-        case TreeItem::SONG:
-            return false;
-        default:
-            return false;
+QSqlError LibraryModel::populateFromDirs() {
+    QString dir;
+    foreach(dir, importDirs) {
+        addFromDir(dir, false);
     }
+    return QSqlError();
 }
-*/
 
-/*
-void LibraryModel::fetchMore(const QModelIndex &parent) {
-    // we are assumping that we don't have too many items here, s
-    // updating all isn't super bad.
-    TreeItem *parentItem = getItem(parent);
-    // if we need to display more artists. 
-    if (parentItem->getItemType() == TreeItem::ROOT) {
-        qDebug() << "fetchMore(ROOT)";
-        int remainder = item_counts.size() - (parentItem->childCount());
-        int itemsToFetch = qMin(100, remainder);
-        qDebug() << "item_counts.size()=" << item_counts.size();
-        qDebug() << "itemsToFetch=" << itemsToFetch;
-        qDebug() << "item_counts.size()+itemsToFetch-1" << item_counts.size()+itemsToFetch-1;
-        QSqlQuery q(db);
-        if (!q.exec(QLatin1String("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
-            qDebug() << "At fetchMore (ROOT): " << q.lastError();
-            return;
-        }
-        beginInsertRows(parent, 0, item_counts.size()+itemsToFetch-1);
-        while (q.next()) {
-            QString Artist = q.value(0).toString();
-            if (!item_counts.contains(Artist)) {
-                QHash<QString, QString> hash;
-                hash["Artist"] = Artist;
-                parentItem->addChild(TreeItem::ARTIST, hash);
-                item_counts[Artist] = 1;
-            }
-        }
-        parentItem->sortChildren();
-        qDebug()<<"fetchMore endInsertRows()";
-        endInsertRows();
+void LibraryModel::refreshLibrary() {
+    // reconstruct the library items and sync database with folder.
+    qDebug() << "Refreshing library";
+    
+    qDebug() << "Clearing library...";
+    beginRemoveRows(QModelIndex(), 0, rootItem->ChildCount()-1);
+    delete rootItem;
+    item_counts.clear();
+    endRemoveRows();
+    
+    qDebug() << "Repopulating library...";
+    QSqlError err = populateModel(); 
+    if (err.type() != QSqlError::NoError) {
+        showError(err, "Populating model failed");
+        return;
     }
 
-    // if we need to display more songs.
-    if (parentItem->getItemType() == TreeItem::ARTIST) {
-        // check if the number of children=mysql table results.
-        QString Artist = parentItem->getItemData()["Artist"];
-        int remainder = item_counts[Artist] - parentItem->childCount();
-        int itemsToFetch = qMin(100, remainder);
-        QSqlQuery q(db);
-        if (!q.exec(QString("SELECT Title, absFilePath  FROM MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(Artist))) {
-            qDebug() << "At fetchMore(ARTIST) " << q.lastError();
-            return;
-        }
-        beginInsertRows(parent, item_counts[Artist], item_counts[Artist]+itemsToFetch-1);
-        while (q.next()) {
-            QString absFilePath = q.value(1).toString();
-            if (!parentItem->getItemData().contains(absFilePath)) {
-                // add the extra item
-                QString Title = q.value(0).toString();
-                QHash<QString, QString> hash;
-                hash["Title"] = Title;
-                hash["absFilePath"] = absFilePath;
-                parentItem->addChild(TreeItem::SONG, hash);
-                item_counts[Artist] += 1;
-            }
-        }
-        parentItem->sortChildren();
-        qDebug()<<"fetchMore endInsertRows()";
-        endInsertRows();
-    }
+    // update the library and database from the preferred dirs, in case new files are added.
+    err = populateFromDirs();
+    assert(err.type() == QSqlError::NoError);
 }
-*/
 
-void LibraryModel::addFromDir(const QString & dir) {
+void LibraryModel::addFromDir(const QString & dir, bool addToImportDirs) {
     QDirIterator it(dir, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         it.next();
@@ -364,6 +338,12 @@ void LibraryModel::addFromDir(const QString & dir) {
         }
     }
     qDebug() << "Finishing importing from folder";
+
+    // add the given dir to import directory list unless specified
+    if (addToImportDirs) {
+        qDebug() << "Adding new directory to CONFIG file";
+        addImportDirs(dir);
+    }
 }
 
 void LibraryModel::addMusicFromPlaylist(const QString absFilePath) {

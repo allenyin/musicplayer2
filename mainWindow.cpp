@@ -31,6 +31,7 @@ MainWindow::~MainWindow() {
     delete menubar;
     delete exitAction;
     delete importFromFolderAction;
+    delete refreshLibraryAction;
     //delete importFileAction;
 }
 
@@ -62,10 +63,17 @@ void MainWindow::setupMenus() {
 
     fileMenu = menubar->addMenu(tr("&File"));
     // actions associated with fileMenu:
+    
     // importFromFolderAction
     importFromFolderAction = new QAction(tr("Import from folder"), this);
     fileMenu->addAction(importFromFolderAction);
     connect(importFromFolderAction, SIGNAL(triggered()), this, SLOT(importFromFolder()));
+
+    // refreshLibraryAction
+    refreshLibraryAction = new QAction(tr("Refresh Library"), this);
+    fileMenu->addAction(refreshLibraryAction);
+    connect(refreshLibraryAction, SIGNAL(triggered()), library->model(), SLOT(refreshLibrary()));
+    
     // exitAction
     exitAction = new QAction(tr("&Exit"), this);
     fileMenu->addAction(exitAction);

@@ -19,8 +19,10 @@ class LibraryModel : public QAbstractItemModel {
 public:
     LibraryModel(QObject *parent = 0);
     ~LibraryModel();
+    void getImportDirs();
+    void addImportDirs(const QString &dir);
     // for file imports
-    void addFromDir(const QString &dir); 
+    void addFromDir(const QString &dir, bool addToImportDirs=true); 
     TreeItem *getItem(const QModelIndex &index) const;
     QHash<QString, QString> getSongInfo(const QModelIndex idx) const;
     QList<QHash<QString, QString> > getArtistSongInfo(const QModelIndex idx) const;
@@ -45,10 +47,12 @@ protected:
 private slots:
     void addMusicFromPlaylist(const QString absFilePath);
     void playlistMetaDataChange(QHash<QString,QString> newHash);
+    void refreshLibrary();
     
 private:
     QSqlError initDb();
     QSqlError populateModel();
+    QSqlError populateFromDirs();
     void addArtistAndSongs(int artistCount, QString Artist, QList<QHash<QString, QString> > &validSongs);
     void showError(const QSqlError &err, const QString msg);
     void addTestEntries();
@@ -65,4 +69,5 @@ private:
     TreeItem *rootItem;
     QSqlDatabase db;
     QHash<QString, int> item_counts;
+    QList<QString> importDirs;
 };
