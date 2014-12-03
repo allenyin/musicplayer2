@@ -49,6 +49,7 @@ private slots:
 private:
     QSqlError initDb();
     QSqlError populateModel();
+    void addArtistAndSongs(int artistCount, QString Artist, QList<QHash<QString, QString> > &validSongs);
     void showError(const QSqlError &err, const QString msg);
     void addTestEntries();
     /*

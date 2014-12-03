@@ -42,6 +42,7 @@ QSqlError LibraryModel::initDb() {
     db.setDatabaseName("AAMusicPlayer_library.db3");
     //db.setDatabaseName(":memory:"); // not persistent yet
     if (!db.open()) {
+        qDebug() << "initDb(): Can't open database!";
         return db.lastError();
     }
 
@@ -62,51 +63,79 @@ QSqlError LibraryModel::initDb() {
     return QSqlError();
 }
 
+
 QSqlError LibraryModel::populateModel() {
-    qDebug() << "Populate the Model!";
-    
+    qDebug() << "Populate the Model from database";
+
     // make root
-    QSqlQuery q(db);
-    if (!q.exec(QLatin1String("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
+    QSqlQuery q(db);    // query for distinct artists
+    QSqlQuery q2(db);   // query for songs with the same artist
+    QSqlQuery q3(db);   // query to delete invalid database entries
+    QList<QHash<QString, QString> > validSongs;
+    if (!q.exec(QString("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
+        qDebug() << "PopulateModel(): select artist failed!";
         return q.lastError();
     }
     rootItem = new TreeItem(QHash<QString, QString>(), TreeItem::ROOT);
 
-    // populate the artist and their song nodes one by one
+    // populate the artist and song nodes
     int artistCount = 0;
     while (q.next()) {
+        validSongs.clear();
+        // find artist first
         QString Artist = q.value(0).toString();
-        beginInsertRows(QModelIndex(), artistCount, artistCount);
-        QHash<QString, QString> hash;
-        hash["Artist"] = Artist;
-        rootItem->addChild(TreeItem::ARTIST, hash);
-        endInsertRows();
-
-        // populate the song nodes
-        QSqlQuery q2(db);
-        if (!q2.exec(QString("SELECT COUNT(*) FROM MUSICLIBRARY WHERE Artist='%1'").arg(Artist))) {
-            return q2.lastError();
-        }
-        q2.next();
-        int songCount = q2.value(0).toInt();
-        qDebug() << "In populateModel, artist=" << Artist << " songcount=" << songCount;
-        QModelIndex artistIndex = index(artistCount,0);
-        beginInsertRows(artistIndex, 0, songCount-1);
+        
+        // find and check how many of its children are valid.
         if (!q2.exec(QString("SELECT absFilePath, Title FROM MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(Artist))) {
+            qDebug() << "PopulateModel(): Selecting SONGS with Artist=" << Artist << " failed!";
             return q2.lastError();
         }
         while (q2.next()) {
+            QFileInfo f(q2.value(0).toString());
+            if (!f.exists()) {
+                // if it doesn't exist, remove database entry
+                qDebug() << "Want to remove item!";
+                if (!q3.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'")
+                                    .arg(q2.value(0).toString()))) {
+                        qDebug() << "PopulateModel(): Removing invalid DB entry with absFilePath=" << q2.value(0).toString() << " failed!";
+                        return q.lastError();
+                }
+                continue;
+            }
+            // otherwise add this to validSongs list
             QHash<QString, QString> hash;
             hash["absFilePath"] = q2.value(0).toString();
             hash["Title"] = q2.value(1).toString();
-            rootItem->child(artistCount)->addChild(TreeItem::SONG, hash);
+            validSongs.append(hash);
         }
-        item_counts[Artist] = songCount;
-        endInsertRows();
-        artistCount++;
+        if (validSongs.size() > 0) {
+            // if there are valid songs left, add to library
+            addArtistAndSongs(artistCount, Artist, validSongs);
+            artistCount++;
+        }
     }
     return QSqlError();
 }
+
+void LibraryModel::addArtistAndSongs(int artistCount, QString Artist, QList<QHash<QString, QString> > &validSongs) {
+    // helper for populateModel(), should not be used by other functions
+    
+    // Add to rootItem at row=artistCount an ARTIST node named "Artist".
+    beginInsertRows(QModelIndex(), artistCount, artistCount);
+    QHash<QString, QString> hash;
+    hash["Artist"] = Artist;
+    rootItem->addChild(TreeItem::ARTIST, hash);
+    endInsertRows();
+
+    // Add the validSongs as child SONG nodes to the new ARTIST node
+    beginInsertRows(index(artistCount,0), 0, validSongs.size()-1);
+    foreach(hash, validSongs) {
+        rootItem->child(artistCount)->addChild(TreeItem::SONG, hash);
+    }
+    // update the item_counts entry
+    item_counts[Artist] = validSongs.size();
+    endInsertRows();
+} 
 
 void LibraryModel::showError(const QSqlError &err, const QString msg) {
     QMessageBox msgBox;
