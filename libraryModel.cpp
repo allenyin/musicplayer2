@@ -614,7 +614,10 @@ bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int 
             }
             
             // move all the nodes over and delete the oldArtist node
-            return batchMoveSongNodes(newArtist, artistItem, index, absFilePathList.size());
+            if (batchMoveSongNodes(newArtist, artistItem, index, absFilePathList.size())) {
+                emit(libraryMetaDataChanged(1, oldArtist, newArtist));
+                return true;
+            }
         }
         else {
             // clicked on a song node
@@ -629,7 +632,10 @@ bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int 
             if (removeEntryFromModel(absFilePath, artist)) {
                 // add the new node
                 QFileInfo fileInfo(absFilePath);
-                return addMusicFromFile(fileInfo);
+                if (addMusicFromFile(fileInfo)) {
+                    emit(libraryMetaDataChanged(0, absFilePath, value.toString()));
+                    return true;
+                }
             }
             return false;
         }

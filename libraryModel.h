@@ -48,6 +48,9 @@ private slots:
     void addMusicFromPlaylist(const QString absFilePath);
     void playlistMetaDataChange(QHash<QString,QString> newHash);
     void refreshLibrary();
+
+signals:
+    void libraryMetaDataChanged(int, QString, QString);
     
 private:
     QSqlError initDb();

@@ -62,6 +62,7 @@ private slots:
     void endRemoveItems();
     void changeItems(int start, int end);
     void changeMetaData(QModelIndex index);
+    void libraryMetaDataChanged(int dataType, QString arg1, QString arg2);
 
 signals:
    void mediaAddedToPlaylist(QString);

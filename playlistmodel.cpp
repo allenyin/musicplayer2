@@ -504,4 +504,29 @@ void PlaylistModel::changeMetaData(QModelIndex index) {
     return;
 }
 
-
+void PlaylistModel::libraryMetaDataChanged(int dataType, QString arg1, QString arg2) {
+    // either title or artist in library have been changed,
+    // alter the affected playlist items accordingly.
+    if (dataType == 0) {
+        // title change
+        QString absFilePath = arg1;
+        QString newTitle = arg2;
+        for(int row = 0; row < m_data.size(); row++) {
+            if (m_data[row]["absFilePath"] == absFilePath) {
+                m_data[row]["Title"] = newTitle;
+                emit(dataChanged(index(row,0), index(row,0)));
+            }
+        }
+    }
+    if (dataType == 1) {
+        // artist change
+        QString oldArtist = arg1;
+        QString newArtist = arg2;
+        for(int row = 0; row < m_data.size(); row++) {
+            if (m_data[row]["Artist"] == oldArtist) {
+                m_data[row]["Artist"] = newArtist;
+                emit(dataChanged(index(row,0), index(row,0)));
+            }
+        }
+    }
+}
