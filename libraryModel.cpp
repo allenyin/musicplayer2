@@ -39,8 +39,8 @@ LibraryModel::~LibraryModel() {
 QSqlError LibraryModel::initDb() {
     
     db = QSqlDatabase::addDatabase("QSQLITE");
-    //db.setDatabaseName("AAMusicPlayer_library.db3");
-    db.setDatabaseName(":memory:"); // not persistent yet
+    db.setDatabaseName("AAMusicPlayer_library.db3");
+    //db.setDatabaseName(":memory:"); // not persistent yet
     if (!db.open()) {
         return db.lastError();
     }
