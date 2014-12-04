@@ -57,6 +57,7 @@ void MainWindow::setupWidgets() {
     connect(player->model(), SIGNAL(mediaAddedToPlaylist(QString)), library->model(), SLOT(addMusicFromPlaylist(QString)));
     connect(player->model(), SIGNAL(playlistMetaDataChange(QHash<QString, QString>)), library->model(), SLOT(playlistMetaDataChange(QHash<QString,QString>)));
     connect(library->model(), SIGNAL(libraryMetaDataChanged(int, QString, QString)), player->model(), SLOT(libraryMetaDataChanged(int, QString, QString)));
+    connect(player->model(), SIGNAL(playlistFileOpened(QFileInfo)), library->model_pl(), SLOT(addToModelAndDB(QFileInfo)));
 }
 
 void MainWindow::setupMenus() {
@@ -74,6 +75,7 @@ void MainWindow::setupMenus() {
     refreshLibraryAction = new QAction(tr("Refresh Library"), this);
     fileMenu->addAction(refreshLibraryAction);
     connect(refreshLibraryAction, SIGNAL(triggered()), library->model(), SLOT(refreshLibrary()));
+    connect(refreshLibraryAction, SIGNAL(triggered()), library->model_pl(), SLOT(refresh()));
     
     // exitAction
     exitAction = new QAction(tr("&Exit"), this);

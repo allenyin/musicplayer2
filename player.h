@@ -1,6 +1,10 @@
 #pragma once
 #include "debug.h"
 #include "util.h"
+#include "playlistmodel.h"
+#include "playercontrols.h"
+#include "playlistTable.h"
+
 #include <QWidget>
 #include <QMediaPlayer>
 #include <QMediaPlaylist>
@@ -15,6 +19,7 @@ class QAudioProbe;
 
 class PlaylistModel;
 class PlaylistTable;
+class PlaylistProxyModel;
 
 class Player : public QWidget {
     Q_OBJECT
@@ -67,6 +72,9 @@ private slots:
     void audioAvailableChanged(bool available);
 
     void displayErrorMessage();
+
+    // playlist saving
+    void savePlaylist();
 
 private:
     void setTrackInfo(const QString &info);

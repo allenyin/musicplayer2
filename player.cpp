@@ -1,7 +1,4 @@
 #include "player.h"
-#include "playlistmodel.h"
-#include "playercontrols.h"
-#include "playlistTable.h"
 
 #include <QMediaService>
 #include <QMediaPlaylist>
@@ -14,13 +11,9 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     player = new QMediaPlayer(this);
 
     //-----------playlist model-view setup------------
-    //playlist = new QMediaPlaylist();
-    //player->setPlaylist(playlist);
-
     playlistModel = new PlaylistModel(this);
-    //playlistModel->setPlaylist(playlist);
 
-    // need to figure the correct column playlist view
+    // need to configure the correct column playlist view
     playlistView = new PlaylistTable(this);
     playlistView->setModel(playlistModel);
     playlistView->setCurrentIndex(playlistModel->index(playlistModel->getCurMediaIdx(),0));
@@ -65,6 +58,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     saveListButton->setIcon(QIcon(":/images/saveList_google_128px.png"));
     saveListButton->setFixedSize(saveListButton->sizeHint());
     saveListButton->setToolTip("Save queue as playlist");
+    connect(saveListButton, SIGNAL(clicked()), this, SLOT(savePlaylist()));
 
     QToolButton *clearListButton = new QToolButton(this);
     clearListButton->setIcon(QIcon(":/images/clearList_google_128px.png"));
@@ -383,6 +377,19 @@ void Player::setStatusInfo(const QString &info)
 void Player::displayErrorMessage()
 {
     setStatusInfo(player->errorString());
+}
+
+void Player::savePlaylist() {
+    if (playlistModel->rowCount(QModelIndex()) == 0) {
+       // nothing to save
+       return;
+    } else {
+       QString fileName = QFileDialog::getSaveFileName(this);
+       if (fileName.isEmpty()) {
+           return;
+       }
+       playlistModel->savePlaylist(fileName);
+    }
 }
 
 void Player::updateDurationInfo(qint64 currentInfo)

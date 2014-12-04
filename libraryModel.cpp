@@ -68,7 +68,7 @@ void LibraryModel::addImportDirs(const QString &dir) {
     
 QSqlError LibraryModel::initDb() {
     
-    db = QSqlDatabase::addDatabase("QSQLITE");
+    db = QSqlDatabase::addDatabase("QSQLITE", "libraryConnection");
     db.setDatabaseName("AAMusicPlayer_library.db3");
     //db.setDatabaseName(":memory:"); // not persistent yet
     if (!db.open()) {
@@ -77,7 +77,6 @@ QSqlError LibraryModel::initDb() {
     }
 
     QStringList tables = db.tables();
-    // not persistent yet
     if (tables.contains("MUSICLIBRARY", Qt::CaseInsensitive)) {
         return QSqlError();
     }
@@ -86,10 +85,10 @@ QSqlError LibraryModel::initDb() {
     q.prepare("CREATE TABLE IF NOT EXISTS MUSICLIBRARY(id integer primary key, absFilePath varchar(200) UNIQUE, fileName varchar, Title varchar, Artist varchar, Album varchar, Length int)");
     if (!q.exec()) {
         // error if table creation not successfull
-        qDebug() << "Table creation error?";
+        qDebug() << "Music Table creation error";
         return q.lastError();
     }
-
+    
     return QSqlError();
 }
 
@@ -264,21 +263,6 @@ QVariant LibraryModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-bool LibraryModel::hasChildren(const QModelIndex &parent) const {
-    TreeItem *parentItem = getItem(parent);
-    //qDebug() << "Calling hasChildren on node type=" << parentItem->getItemType();
-    switch (parentItem->getItemType()) {
-        case TreeItem::ROOT:
-            return item_counts.size() > 0;
-        case TreeItem::ARTIST:
-            return true;
-        case TreeItem::SONG:
-            return false;
-        default:
-            return false;
-    }
-}
-
 TreeItem *LibraryModel::getItem(const QModelIndex &index) const {
     if (index.isValid()) {
         TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
@@ -390,25 +374,8 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
     if (q.exec(QString("INSERT INTO MUSICLIBRARY(absFilePath, fileName, Title, Artist, Album, Length) VALUES ('%1', '%2', '%3', '%4', '%5', %6)")
                 .arg(absFilePath).arg(fileName).arg(title).arg(artist).arg(album).arg(length))) {
         // entry inserted successfully, check if there are items in the model already
-        /*
-        if (!item_counts.contains(artist)) {
-            // insert artist node if doesn't exist
-            QList<QString> keys = item_counts.keys();
-            keys.append(artist);
-            qSort(keys);
-            int newArtistIdx = keys.indexOf(artist);
-            //qDebug() << "Inserting new artist, artist=" << artist;
-            //qDebug() << "Sorted keys including artist: " << keys;
-            //qDebug() << "newArtistIdx is: " << newArtistIdx;
-            beginInsertRows(QModelIndex(), newArtistIdx, newArtistIdx);
-            QHash<QString, QString> hash;
-            hash["Artist"] = artist;
-            rootItem->insertChild(newArtistIdx, TreeItem::ARTIST, hash);
-            item_counts[artist] = 0;
-            endInsertRows();
-        }*/
-
         insertArtistNode(artist);
+        
         // insert song node by:
         // find the artistNode
         int artistIndex = rootItem->findChildIndex(artist);

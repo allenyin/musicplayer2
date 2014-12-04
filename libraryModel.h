@@ -36,7 +36,7 @@ protected:
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
     // for dynamic fetching...kinda obsolete
-    virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
+    //virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
 
     // drag and drop support with playlist, and editing library entries
     virtual QMimeData* mimeData(const QModelIndexList &indexes) const;

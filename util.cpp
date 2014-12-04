@@ -12,6 +12,7 @@ void Util::get_metaData(QString path, QHash<QString, QString>& hash) {
         TagLib::FileRef f(cString);
         if (f.isNull()) {
             hash.clear();
+            return;
         }
         if (!f.isNull() && f.tag()) {
             TagLib::Tag *tag = f.tag();

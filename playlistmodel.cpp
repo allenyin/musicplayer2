@@ -2,6 +2,11 @@
 #include <QColor>
 #include <QBrush>
 #include <QMimeData>
+#include <QApplication>
+#include <QMessageBox>
+#include <QWidget>
+
+class QMessageBox;
 
 PlaylistModel::PlaylistModel(QObject *parent) 
     : QAbstractTableModel(parent){
@@ -260,6 +265,14 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
     // append media to end of m_data
     int start = m_data.size();
     foreach(QString const &path, fileNames) {
+        QFileInfo fileInfo(path);
+        qDebug() << "Suffix is: " << fileInfo.suffix();
+        if (fileInfo.suffix() == "m3u") {
+            // add to playlist library
+            qDebug() << "Want to add playlist to playlist-library!!!!!";
+            emit(playlistFileOpened(fileInfo));
+            continue;
+        }
         QHash<QString, QString> hash;
         u->get_metaData(path, hash);
         if (!hash.empty()) {
@@ -462,6 +475,25 @@ void PlaylistModel::endRemoveItems() {
 
 void PlaylistModel::changeItems(int start, int end) {
     emit dataChanged(index(start,0), index(end,columns));
+}
+
+void PlaylistModel::savePlaylist(QString &fileName) {
+    QFile file(QString("%1.m3u").arg(fileName));
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        QMessageBox::warning(dynamic_cast<QWidget*>(this), tr("Application"),
+                             tr("Cannot write file %1:\n%2.")
+                             .arg(fileName)
+                             .arg(file.errorString()));
+        return;
+    }
+
+    QTextStream out(&file);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    for (int i=0; i < m_data.size(); i++) {
+       out << m_data[i]["absFilePath"] << "\n";
+    }
+    QApplication::restoreOverrideCursor();
+    return;
 }
 
 void PlaylistModel::changeMetaData(QModelIndex index) {
