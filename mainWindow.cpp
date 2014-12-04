@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QString>
 #include <QFileDialog>
+#include <QDesktopWidget>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle(tr("AAMusicPlayer"));
@@ -32,7 +33,8 @@ MainWindow::~MainWindow() {
     delete exitAction;
     delete importFromFolderAction;
     delete refreshLibraryAction;
-    //delete importFileAction;
+    delete aboutMenu;
+    delete aboutAction;
 }
 
 void MainWindow::setupWidgets() {
@@ -60,6 +62,7 @@ void MainWindow::setupWidgets() {
     connect(player->model(), SIGNAL(playlistFileOpened(QFileInfo)), library->model_pl(), SLOT(addToModelAndDB(QFileInfo)));
 
     connect(library->model_pl(), SIGNAL(loadPlaylist(QString)), player->model(), SLOT(loadPlaylistItem(QString)));
+    connect(player->model(), SIGNAL(newPlaylistCreated(QString, QString)), library->model_pl(), SLOT(addNewlyCreatedPlaylist(QString, QString)));
 }
 
 void MainWindow::setupMenus() {
@@ -78,11 +81,18 @@ void MainWindow::setupMenus() {
     fileMenu->addAction(refreshLibraryAction);
     connect(refreshLibraryAction, SIGNAL(triggered()), library->model(), SLOT(refreshLibrary()));
     connect(refreshLibraryAction, SIGNAL(triggered()), library->model_pl(), SLOT(refresh()));
-    
+
     // exitAction
     exitAction = new QAction(tr("&Exit"), this);
     fileMenu->addAction(exitAction);
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
+
+    aboutMenu = menubar->addMenu(tr("&About"));
+
+    // aboutAction
+    aboutAction = new QAction(tr("About"), this);
+    aboutMenu->addAction(aboutAction);
+    connect(aboutAction, SIGNAL(triggered()), SLOT(about()));
 }
 
 void MainWindow::importFromFolder() {
@@ -90,3 +100,10 @@ void MainWindow::importFromFolder() {
                           QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     library->model()->addFromDir(dir);
 }
+
+void MainWindow::about() {
+    QString msg = "AAMusicPlayer\nThe MIT License (MIT)\nCopyright (c) 2014 Allen Yin, April Dai";
+    QMessageBox::about(0, "Title", msg);
+}
+
+

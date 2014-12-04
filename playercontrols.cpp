@@ -44,6 +44,7 @@ PlayerControls::PlayerControls(QWidget *parent) :
     volumeSlider->setRange(0, 100);
     volumeSlider->setFixedSize(volumeSlider->sizeHint());
     connect(volumeSlider, SIGNAL(sliderMoved(int)), this, SIGNAL(changeVolume(int)));
+    connect(volumeSlider, SIGNAL(valueChanged(int)), this, SIGNAL(changeVolume(int)));
 
     // playback rate box chooser
     /* Works like the following:

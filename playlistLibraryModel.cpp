@@ -135,9 +135,18 @@ void PlaylistLibraryModel::addFromDir(const QString &dir) {
     }
 }
 
+void PlaylistLibraryModel::addNewlyCreatedPlaylist(QString absFilePath, QString fileName) {
+    // only add the database item, need to refresh for the new playlist to show up.
+    Q_UNUSED(absFilePath)
+    QSqlQuery q(db);
+    if (q.exec(QString("INSERT INTO PLAYLISTLIBRARY(absFilePath) VALUES ('%1')").arg(absFilePath))) {
+        return;
+    }
+}
+
 void PlaylistLibraryModel::addToModelAndDB(QFileInfo fileInfo) {
-    qDebug() << "Adding playlist to model and DB!";
     QString absFilePath = fileInfo.canonicalFilePath();
+    qDebug() << "Adding playlist to model and DB, absFilePath is: " << absFilePath;
     QSqlQuery q(db);
     if (q.exec(QString("INSERT INTO PLAYLISTLIBRARY(absFilePath) VALUES ('%1')").arg(absFilePath))) {
         addToModelOnly(fileInfo);
@@ -186,4 +195,47 @@ void PlaylistLibraryModel::showError(const QSqlError &err, const QString msg) {
 void PlaylistLibraryModel::loadPlaylist(const QModelIndex &idx) {
     QString absFilePath = data(index(idx.row(),1)).toString();
     emit(loadPlaylist(absFilePath));
+}
+
+void PlaylistLibraryModel::deletePlaylist(const QModelIndex &idx) {
+    QString absFilePath = data(index(idx.row(),1)).toString();
+    // remove node
+    removeRows(idx.row(), 1); 
+    // remove database item
+    QSqlQuery q(db);
+    if (!q.exec(QString("DELETE FROM PLAYLISTLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
+        qDebug() << "PlaylistLibraryModel: deleting playlist failed: " << q.lastError();
+        return;
+    }
+    // remove actual file
+    if (!QFile::remove(absFilePath)) {
+        qDebug() << "Unable to remove playlist file!";
+    }
+}
+
+void PlaylistLibraryModel::changePlaylistName(const QModelIndex &idx, QString newName) {
+    qDebug() << "Want to change playlistName, which is: " << data(index(idx.row(),0)).toString();
+
+    // get new file name
+    QString absFilePath = data(index(idx.row(),1)).toString();
+    QFileInfo original(absFilePath);
+    QString newPath = original.canonicalPath() + QDir::separator() + newName + ".m3u";
+
+    // change playlist's name
+    QFile file(absFilePath);
+    file.rename(newPath);
+    file.close();
+    
+    // remove node
+    removeRows(idx.row(), 1);
+
+    // delete database entry
+    QSqlQuery q(db);
+    if (!q.exec(QString("DELETE FROM PLAYLISTLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
+        qDebug() << "PlaylistLibraryModel: deleting playlist failed: " << q.lastError();
+        return;
+    }
+
+    QFileInfo reNamed(newPath);
+    addToModelAndDB(reNamed);
 }

@@ -29,13 +29,19 @@ Library::Library(QWidget *parent) : QWidget(parent) {
 
     // layout
     QBoxLayout *displayLayout = new QVBoxLayout;
+    displayLayout->setSpacing(5);
+    
     displayLayout->addWidget(libraryLabel);
-    displayLayout->setSpacing(2);
+    displayLayout->setStretch(0, 1);
+    
     displayLayout->addWidget(libraryView);
-    displayLayout->setSpacing(2);
+    displayLayout->setStretch(1, 10);
+    
     displayLayout->addWidget(playlistLabel);
-    displayLayout->setSpacing(2);
+    displayLayout->setStretch(2, 1);
+
     displayLayout->addWidget(plView);
+    displayLayout->setStretch(3, 5);
     setLayout(displayLayout);
 
     // signal connections

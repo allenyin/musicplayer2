@@ -449,7 +449,7 @@ void PlaylistModel::loadPlaylistItem(QString absFilePath) {
     // load the playlist item described by absFilePath;
     clear();
     QFile pFile(absFilePath);
-    assert(pFile.open(QIODevice::ReadOnly | QIODevice::Text));
+    pFile.open(QIODevice::ReadWrite | QIODevice::Text);
     QTextStream in(&pFile);
     QStringList fileNames;
     while (!in.atEnd()) {
@@ -463,8 +463,8 @@ const QString PlaylistModel::getCurAlbumArtist() const {
     //qDebug() << "getCurAlbumArtist(): idx=" << curMediaIdx;
     if (curMediaIdx >= 0) {
         return QString("%1 - %2")
-            .arg(m_data[curMediaIdx]["Album"])
-            .arg(m_data[curMediaIdx]["Artist"]);
+            .arg(m_data[curMediaIdx]["Artist"])
+            .arg(m_data[curMediaIdx]["Album"]);
     }
     return QString();
 }
@@ -492,7 +492,7 @@ void PlaylistModel::changeItems(int start, int end) {
     emit dataChanged(index(start,0), index(end,columns));
 }
 
-void PlaylistModel::savePlaylist(QString &fileName) {
+void PlaylistModel::savePlaylist(QString fileName) {
     QFile file(QString("%1.m3u").arg(fileName));
     if (!file.open(QFile::WriteOnly | QFile::Text)) {
         QMessageBox::warning(dynamic_cast<QWidget*>(this), tr("Application"),
@@ -508,6 +508,8 @@ void PlaylistModel::savePlaylist(QString &fileName) {
        out << m_data[i]["absFilePath"] << "\n";
     }
     QApplication::restoreOverrideCursor();
+    QFileInfo f(fileName);
+    emit(newPlaylistCreated(f.canonicalFilePath(), f.baseName()));
     return;
 }
 

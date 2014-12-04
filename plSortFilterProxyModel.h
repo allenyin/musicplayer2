@@ -7,6 +7,10 @@ class PLSortFilterProxyModel : public QSortFilterProxyModel {
 public:
     PLSortFilterProxyModel(QObject *parent = 0);
 
+protected:
+    virtual bool setData(const QModelIndex &index, const QVariant &value, int role);
+    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
+
 private slots:
     void sortItems();
 

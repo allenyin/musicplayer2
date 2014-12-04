@@ -252,6 +252,8 @@ void Player::clearPlaylist() {
     playlistView->setCurrentIndex(QModelIndex());
     player->setMedia(QMediaContent());
     playlistModel->clear();
+    changePlaylistLabel(QString());
+    setTrackInfo(QString()); 
 }
 
 void Player::stop() {
@@ -384,10 +386,12 @@ void Player::displayErrorMessage()
 void Player::savePlaylist() {
     if (playlistModel->rowCount(QModelIndex()) == 0) {
        // nothing to save
+       qDebug() << "Nothing to save!";
        return;
     } else {
        QString fileName = QFileDialog::getSaveFileName(this);
        if (fileName.isEmpty()) {
+           qDebug() << "File name empty!";
            return;
        }
        playlistModel->savePlaylist(fileName);
@@ -400,7 +404,8 @@ void Player::changePlaylistLabel(QString absFilePath) {
         return;
     }
     QFileInfo f(absFilePath);
-    curPlaylistLabel->setText(f.baseName());
+    curPlaylistLabel->setText(QString("Playlist: %1").arg(f.baseName()));
+    stop();
 }
 
 void Player::updateDurationInfo(qint64 currentInfo)

@@ -11,13 +11,15 @@ public:
     ~PlaylistLibraryModel();
     void addFromDir(const QString &dir); 
     void loadPlaylist(const QModelIndex &idx); 
+    void deletePlaylist(const QModelIndex &idx);
+    void changePlaylistName(const QModelIndex &idx, QString newName);
 
 protected:
-
 
 private slots:
     void addToModelAndDB(QFileInfo fileInfo);
     void refresh();
+    void addNewlyCreatedPlaylist(QString absFilePath, QString fileName);
 
 signals:
     void playlistItemAdded();   // connect to proxymodel for sorting

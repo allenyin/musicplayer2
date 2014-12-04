@@ -1,7 +1,128 @@
-Required packages:
+AAMusicPlayer 
+=============
 
-1) qt-default media player codec: dpkg-query -l '*gstreamer*'
-2) taglib 1.9.1 (latest)
+DESCRIPTION:
+------------
+
+AAMusicPlayer demonstrates all the basic functionalities of a media player (and then some) with a GUI based on the Qt5 framework, platform support on both Linux Ubuntu and Mac OSX, and media support of all types supported by Qt's plat-form specific media backends (GStreamer on Linux). It is
+especially suitable for media-tag (Title, Artist, Album) editing.
+
+
+
+FEATURE IMPLEMENTED:
+--------------------
+
+> Full playlist support
+> Multiple play controls
+> Library list support
+> Local search and import
+> Repeat one, loop and shuffle
+> Cross-platform support
+
+
+
+DETAILS:
+--------
+
+> PLAYBACK:
+
+Qt5 built-in MediaPlayer widget is used to handle the decoding of the media files. 
+
+-- Play/Pause button starts or pause the playback of the curent media file. 
+-- Next and Back buttons skip to the next or previous songs in the playlist. 
+-- Volumn button and the slider besides it mutes, raises or decreases the volumn. 
+-- Stop button ceases the current media file.
+-- slider shows the progress of the playback, which could be manually dragged to advance/rewind the song.
+ 
+
+> PLAYLIST:
+
+The playlist is a collection of media files that we are currently playing. The playlist area has columns to display the song's Name, Artist, Album and Length information, based on the mp3 file's metadata. Five buttons provide different playlist options including Repeat, Loop, Shuffle, Save and Delete the playlist. The name of the playlist is also shown.
+
+1) Under the playlist, the song's information (except the Length) could be edited (by pressing the platform-specific edit-key, F2 in Ubuntu) and auto saved to the media file's metadata (by clicking "enter/return"). The edit can be canceled by pressing "ESC".
+
+2) The width of each column in the playlist (except the "Title" column) could be automatically stretched with the musicplayer's interface. And the width of those three columns are equally divided. The "Title" column is manually adjusted.
+
+3) The song in the playlist could be played by either double clicking it or pressing the play/pause/next/previous button. If more than one songs are in the playlist, the first song will be played after the play/pause button is clicked.
+
+4) The user could switch songs' order in the playlist by dragging them into the specific position.
+
+5) The trashcan icon is used to clear the playlist window.
+
+5) The shuffle, repeat and loop buttons could be pressed simultaneously, and the resulting playback behavior is intuitive:
+   --If the "Repeat" and the "Loop" buttons were both clicked, the player would keep repeating one song until the user press the next/back button. If the last song of the playlist is current playing, the first song will be played after pressing the "next" button; and if the first song of the playlist is playing, the last song will be played after pressing the "back" button.
+   --If all three buttons are being selected, one song will keep playing until the user press the next/back button, the playlist would randomly pick another song. And it would not be stopped even if the first/last song in the playlist is chosen.
+
+
+> LIBRARY:
+
+The library area allows the user to navigate the file-system to add folders/files to the collection. Once a folder/file is selected, the media files contained will be processed for the metadata and added to the area (as well as the backend SQLite3 database). The Library will display the songs in artist items (in alphabetic order), which when expanded will show the individual song names. Other metadata information of the song is hidden for the further use.
+
+1) Open button inserts a file to the library and the playlist as well. "File">"Import Folder" imports a folder to the library.
+
+2) If one song's metadata does not indicate any information of its Title, Artist, and/or Album, the library will put it into the "Unknown" list.
+
+3) Once the user imports a directory, that directory will be saved the application's configuration. The application will check the saved directories for updates on launch or by pressing "File">"Refresh Library".
+
+4) One song could be inserted into the playlist by double clicking it in the library. Multiple songs could be added by selecting and dragging them into the playlist. All the songs from one artist could be put into the playlist by only double clicking that artist item in the library.
+
+5) Individual song titles can be edited by pressing the edit key (F2), this will update immediately and be saved to the file's metadata.
+
+6) The artist attribute of songs by the same artist can be changed by batch in the Library by editing the individual artist items in the Library in the same way. The changes are updated immediately in the library/database/actual file metadata.
+
+7) Both title and artist changes in the library will reflect in the playlist window if any of the media displayed is effected. 
+   Similarly, edits in the playlist window will be reflected in the library window as well.
+
+NOTE: This database-library-playlist data synchronization was not originally planned is much more complicated than we previously expected. However
+      for functional completeness, we spent a significant amount of time implementing and optimizing it (even re-inventing some of the wheels). We
+      hope you can treat this as a stretch goal.
+ 
+
+> TITLE:
+
+1) The Title Bar displays "AAMusicPlayer" by default. If there are songs present in the playlist area, it will show either the current track information (Title - Arist - Album).
+
+
+> PLAYLIST:
+
+1) Clicking the "plus" symbol above the playlist window will save the current selection of songs to a preferred playlist file (".m3u"). The user 
+   can then click refresh library to see the newly created list in the "Playlists" area.
+
+2) This area will also display all playlists
+     - created through the way described above.
+     - any ".m3u" files opened through the "open" button. The action will only import the playlist into this area, but will not play it, however.
+     - any ".m3u" files inside the preferred directories (the same ones used by the Library, as described before).
+
+3) Double-clicking any of the playlist item will clear the current playlist window and display the media contents of the list.
+   The label on the top-left corner of the playlist-window will become the name of the list that's playing.
+
+4) Playlists can be deleted or renamed by selecting an item and pressing "Delete" or "F2". Since there is also a backend SQLite3 table associated
+   with this area, these editing actions will again synchronize between the display-database-filesystem.
+
+NOTE:
+    Both the Library and Playlist area, our first implemented functional blocks, are implemented using Model-View deisgn pattern. Thus to keep
+    data sorted and invariant intact, a lot of data-structure manipulation and more sophiticated synchronization algorithms were needed. We worked
+    hard to optimize the performance.
+
+    However, on the last day, we discovered the concept of a ProxyModel -- a Model layer that sits between the Model and View and acts as a filter.
+    This could potentially have dramatically reduced our workload and optimization efforts. But as our two functional blocks from before were 
+    already optimized (optimization leads to somewhat tighter coupling), we decided to not use any proxy models. Hence the lack of library and
+    playlist search boxes (which we should have designated as a stretch goal).
+
+    BUT: Our last feature, the PLAYLISTS browser is implemented with a proxymodel to sort and display our data. The performance seems to be on par
+    with our own optimizations without the proxymodel.
+ 
+
+REQUIRED PACKAGES:
+------------------
+
+1) qt-default media player codec. 
+   On Ubuntu, follow the steps from qt-project.org/wiki/Install_Qt_5_on_Ubuntu. 
+   On Mac OSX, follow the steps form qt-project.org/doc/qt-5/macosx.html.
+
+2) taglib 1.9.1 (latest version). 
+   On OSX, xcode developer tools, cmake and homebrew should be installed before. More information could be found from (taglib.github.io).
+   
 3) sqlite3
 
 -- Make restriction to allow only one instance to run for database consistency.

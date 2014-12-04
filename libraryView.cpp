@@ -18,6 +18,7 @@ LibraryView::LibraryView(QWidget *parent) : QTreeView(parent) {
 
     // cosmetics
     setAlternatingRowColors(true);
+    setWordWrap(true);
 }
 
 LibraryView::~LibraryView() {

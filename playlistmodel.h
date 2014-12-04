@@ -57,7 +57,7 @@ public:
     const QString getCurTitle(void) const;
 
     // saving playlist
-    void savePlaylist(QString &fileName); 
+    void savePlaylist(QString fileName); 
 
 private slots:
     void beginRemoveItems(int start, int end);
@@ -70,6 +70,7 @@ private slots:
 signals:
    void changePlaylistLabel(QString);
    void playlistFileOpened(QFileInfo);
+   void newPlaylistCreated(QString, QString);
    void mediaAddedToPlaylist(QString);
    void mediaAvailable();
    void playlistMetaDataChange(QHash<QString, QString>);  // should be caught by library to update database.

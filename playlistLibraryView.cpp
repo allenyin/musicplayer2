@@ -14,7 +14,7 @@ PlaylistLibraryView::PlaylistLibraryView(QWidget* parent) : QTableView(parent) {
 
     // Appearance
     setSelectionBehavior(QAbstractItemView::SelectRows);
-    setSelectionMode(QAbstractItemView::ExtendedSelection);
+    setSelectionMode(QAbstractItemView::SingleSelection);
     resizeColumnToContents(0);
     verticalHeader()->hide();
     horizontalHeader()->hide();
@@ -48,8 +48,18 @@ void PlaylistLibraryView::setModel(QAbstractItemModel *model) {
 void PlaylistLibraryView::mouseDoubleClickEvent(QMouseEvent *event) {
     QPoint clickPos = event->pos();
     QModelIndex clickIdx = QTableView::indexAt(clickPos);
-    //QMap<int, QVariant> m = proxyModel->itemData(clickIdx);
-    //qDebug() << proxyModel->mapToSource(clickIdx);
     myModel->loadPlaylist(proxyModel->mapToSource(clickIdx));
+}
+
+void PlaylistLibraryView::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Delete) {
+        QModelIndexList selected = selectedIndexes();
+        QModelIndex idx = selected[0];
+        myModel->deletePlaylist(proxyModel->mapToSource(idx));
+    }
+    else {
+        QTableView::keyPressEvent(event);
+    }
+
 }
 

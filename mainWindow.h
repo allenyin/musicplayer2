@@ -21,6 +21,7 @@ public slots:
 
 private slots:
     void importFromFolder();
+    void about();
 
 private:
     Player *player;
@@ -28,10 +29,11 @@ private:
     QWidget *centralWidget;
     QMenuBar *menubar;
     QMenu *fileMenu;
+    QMenu *aboutMenu;
     QAction *exitAction;
     QAction *importFromFolderAction;
     QAction *refreshLibraryAction;
-    //QAction *importFileAction;
+    QAction *aboutAction;
     void setupWidgets();
     void setupMenus();
 
