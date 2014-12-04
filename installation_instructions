@@ -1,0 +1,28 @@
+1) Install qt5
+sudo apt-get install g++
+sudo apt-get install qtbase5-dev
+sudo apt-get install qtdeclarative5-dev
+sudo apt-get install qt5-default
+sudo apt-get install qtmultimedia5-dev
+
+2) gstreamer and multimedia
+sudo apt-get install libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev gstreamer-tools gstreamer0.10-plugins-good gstreamer0.10-plugins-bad libqtgstreamer-dev qtdeclarative5*
+
+3) Install taglib
+wget http://taglib.github.io/releases/taglib-1.9.1.tar.gz
+tar -xzvf taglib-1.9.1.tar.gz
+cd taglib-1.9.1
+sudo apt-get install cmake
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_RELEASE_TYPE=Release .
+make
+sudo make install
+
+4) Install sqlite
+sudo apt-get install sqlite3
+
+5) Go to the directory where our project files are
+qmake
+make
+./music_player2
+
+
