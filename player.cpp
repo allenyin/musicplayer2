@@ -9,6 +9,7 @@
 
 Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     player = new QMediaPlayer(this);
+    duration = 0;
 
     //-----------playlist model-view setup------------
     playlistModel = new PlaylistModel(this);
@@ -227,14 +228,14 @@ void Player::playlistPositionChanged(int currentItem) {
 }
 
 void Player::curMediaRemoved(int newCurMediaIdx) {
-    qDebug() << "Player: curMediaRemoved";
+    ////qDebug() << "Player: curMediaRemoved";
     stop();
     if (newCurMediaIdx >= 0) {
         playlistView->setCurrentIndex(playlistModel->index(newCurMediaIdx,0));
         player->setMedia(playlistModel->currentMedia());
     }
     else {
-        qDebug() << "Player: curMediaRemoved, set media to none!";
+        //qDebug() << "Player: curMediaRemoved, set media to none!";
         playlistView->setCurrentIndex(QModelIndex());
         player->setMedia(QMediaContent());
         emit(changeTitle("AAMusicPlayer"));
@@ -242,12 +243,12 @@ void Player::curMediaRemoved(int newCurMediaIdx) {
 }
 
 void Player::mediaAvailable() {
-    qDebug() << "Player: mediaAvailable";
+    //qDebug() << "Player: mediaAvailable";
     player->setMedia(playlistModel->currentMedia());
 }
 
 void Player::clearPlaylist() {
-    qDebug() << "Player: clearPlaylist";
+    //qDebug() << "Player: clearPlaylist";
     stop();
     playlistView->setCurrentIndex(QModelIndex());
     player->setMedia(QMediaContent());
@@ -259,7 +260,7 @@ void Player::clearPlaylist() {
 void Player::stop() {
     player->stop();
     slider->setValue(0);
-    qDebug() << "Clearing labelDuration in stop()";
+    //qDebug() << "Clearing labelDuration in stop()";
     labelDuration->clear();
     player->setPosition(0);
 }
@@ -303,7 +304,7 @@ void Player::statusChanged(QMediaPlayer::MediaStatus status) {
             setStatusInfo(tr("Loading..."));
             break;
         case QMediaPlayer::StalledMedia:
-            qDebug() << "Media stalled";
+            //qDebug() << "Media stalled";
             setStatusInfo(tr("Media Stalled"));
             break;
         case QMediaPlayer::EndOfMedia:
@@ -347,7 +348,7 @@ void Player::metaDataChanged() {
     if (player->isMetaDataAvailable()) {
         QString title = playlistModel->getCurTitle();
         QString albumArtist = playlistModel->getCurAlbumArtist();
-        qDebug() << "metaDataChanged loop: title=" << title << ", albumArtist=" << albumArtist;
+        //qDebug() << "metaDataChanged loop: title=" << title << ", albumArtist=" << albumArtist;
         if (!title.isNull() && !albumArtist.isNull()) {
             setTrackInfo(QString("%1 - %2").arg(title).arg(albumArtist));
         }
@@ -386,12 +387,12 @@ void Player::displayErrorMessage()
 void Player::savePlaylist() {
     if (playlistModel->rowCount(QModelIndex()) == 0) {
        // nothing to save
-       qDebug() << "Nothing to save!";
+       //qDebug() << "Nothing to save!";
        return;
     } else {
        QString fileName = QFileDialog::getSaveFileName(this);
        if (fileName.isEmpty()) {
-           qDebug() << "File name empty!";
+           //qDebug() << "File name empty!";
            return;
        }
        playlistModel->savePlaylist(fileName);

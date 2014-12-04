@@ -129,7 +129,6 @@ void PlaylistLibraryModel::addFromDir(const QString &dir) {
             addFromDir(fileInfo.canonicalFilePath());
         }
         if (fileInfo.suffix() == "m3u") {
-            qDebug() << "PlaylistLibraryModel()::addFromDir: Found a playlist file";
             addToModelAndDB(fileInfo);
         }
     }
@@ -146,22 +145,22 @@ void PlaylistLibraryModel::addNewlyCreatedPlaylist(QString absFilePath, QString 
 
 void PlaylistLibraryModel::addToModelAndDB(QFileInfo fileInfo) {
     QString absFilePath = fileInfo.canonicalFilePath();
-    qDebug() << "Adding playlist to model and DB, absFilePath is: " << absFilePath;
+    //qDebug() << "Adding playlist to model and DB, absFilePath is: " << absFilePath;
     QSqlQuery q(db);
     if (q.exec(QString("INSERT INTO PLAYLISTLIBRARY(absFilePath) VALUES ('%1')").arg(absFilePath))) {
         addToModelOnly(fileInfo);
         return;
     }
-    qDebug() << "PlaylistLibraryModel::addToModelAndDB(): adding database entry failed: " << q.lastError();
+    //qDebug() << "PlaylistLibraryModel::addToModelAndDB(): adding database entry failed: " << q.lastError();
 }
 
 void PlaylistLibraryModel::addToModelOnly(QFileInfo &fileInfo) {
     // add the playlist to model only, no database entry
-    bool a = insertRow(0);
-    qDebug() << "PlaylistLibraryModel::addToModelOnly(): " << fileInfo.canonicalFilePath();
+    insertRow(0);
+    //qDebug() << "PlaylistLibraryModel::addToModelOnly(): " << fileInfo.canonicalFilePath();
     setData(index(0,0), fileInfo.baseName());
     setData(index(0,1), fileInfo.canonicalFilePath());
-    qDebug() << "Insert suceeded? " << a;
+    //qDebug() << "Insert suceeded? " << a;
     emit(playlistItemAdded());
 }
 

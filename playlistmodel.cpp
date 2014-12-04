@@ -20,6 +20,7 @@ PlaylistModel::PlaylistModel(QObject *parent)
 }
 
 PlaylistModel::~PlaylistModel() {
+    delete u;
 }
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
@@ -156,7 +157,7 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
             break; 
         } 
         changeMetaData(index);
-        qDebug() << "playlistModel::setData()";
+        //qDebug() << "playlistModel::setData()";
         emit(playlistMetaDataChange(m_data[row]));
         return true;
     }
@@ -175,7 +176,7 @@ QStringList PlaylistModel::mimetypes() const {
 }
 
 QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
-    //qDebug() << "PlaylistModel::mimeData() called with indexes=" << indexes;
+    ////qDebug() << "PlaylistModel::mimeData() called with indexes=" << indexes;
     QMimeData *mimeData = new QMimeData();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
@@ -187,7 +188,7 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     foreach(index, indexes) {
         if (index.isValid()) {
 #if DEBUG_PLAYLIST
-            qDebug()<< "row for index is: " << row;
+            //qDebug()<< "row for index is: " << row;
 #endif
             if (index.row() != row) {
                 row = index.row();
@@ -197,7 +198,7 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     }
     mimeData->setData("myMediaItem", encodedData);
 #if DEBUG_PLAYLIST
-    qDebug()<< "Called mimeData with indexes=" << indexes;
+    //qDebug()<< "Called mimeData with indexes=" << indexes;
 #endif
     return mimeData;
 }
@@ -206,7 +207,7 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
     //moving songs down
     if (to == -1) {
 #if DEBUG_PLAYLIST
-        qDebug() << "Moving to end";
+        //qDebug() << "Moving to end";
 #endif
         for (int i=0; i < fromList.size(); i++) {
             m_data.append(m_data[fromList[0]]);
@@ -218,7 +219,7 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
     }
     if (offset > 0) {
 #if DEBUG_PLAYLIST  
-        qDebug() << "Moving down";
+        //qDebug() << "Moving down";
 #endif
         for (int i=0; i < fromList.size(); i++) {
             m_data.move(fromList[0], to);
@@ -232,7 +233,7 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
         // moving songs up
         if (to == 0) {
 #if DEBUG_PLAYLIST 
-            qDebug() << "Moving to beginning";
+            //qDebug() << "Moving to beginning";
 #endif
             m_data.prepend(m_data[fromList[0]]);
             m_data.removeAt(fromList[0]+1);
@@ -248,7 +249,7 @@ void PlaylistModel::swapSong(int to, QList<int> fromList, int offset) {
         }
         else {
 #if DEBUG_PLAYLIST
-            qDebug() << "Moving up";
+            //qDebug() << "Moving up";
 #endif
             for (int i=0; i < fromList.size(); i++) {
                 m_data.move(fromList[i], to+i);
@@ -267,10 +268,10 @@ void PlaylistModel::addMedia(const QStringList& fileNames) {
     int start = m_data.size();
     foreach(QString const &path, fileNames) {
         QFileInfo fileInfo(path);
-        qDebug() << "Suffix is: " << fileInfo.suffix();
+        //qDebug() << "Suffix is: " << fileInfo.suffix();
         if (fileInfo.suffix() == "m3u") {
             // add to playlist library
-            qDebug() << "Want to add playlist to playlist-library!!!!!";
+            //qDebug() << "Want to add playlist to playlist-library!!!!!";
             emit(playlistFileOpened(fileInfo));
             continue;
         }
@@ -385,7 +386,7 @@ const QMediaContent PlaylistModel::pressNextMedia() {
 
 const QMediaContent PlaylistModel::currentMedia() {
     if (curMediaIdx >= 0) {
-        qDebug() << "Getting current media";
+        //qDebug() << "Getting current media";
         QUrl url = QUrl::fromLocalFile(m_data[curMediaIdx]["absFilePath"]);
         return url;
     }
@@ -460,7 +461,7 @@ void PlaylistModel::loadPlaylistItem(QString absFilePath) {
 }
 
 const QString PlaylistModel::getCurAlbumArtist() const {
-    //qDebug() << "getCurAlbumArtist(): idx=" << curMediaIdx;
+    ////qDebug() << "getCurAlbumArtist(): idx=" << curMediaIdx;
     if (curMediaIdx >= 0) {
         return QString("%1 - %2")
             .arg(m_data[curMediaIdx]["Artist"])
@@ -470,7 +471,7 @@ const QString PlaylistModel::getCurAlbumArtist() const {
 }
 
 const QString PlaylistModel::getCurTitle() const {
-    //qDebug() << "getCurTitle(): idx=" << curMediaIdx;
+    ////qDebug() << "getCurTitle(): idx=" << curMediaIdx;
     if (curMediaIdx >= 0) {
         return m_data[curMediaIdx]["Title"];
     }

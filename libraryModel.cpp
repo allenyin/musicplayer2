@@ -38,6 +38,7 @@ LibraryModel::LibraryModel(QObject *parent) : QAbstractItemModel(parent) {
 }
 
 LibraryModel::~LibraryModel() {
+    delete u;
     delete rootItem;    
     db.close();
 }
@@ -72,7 +73,7 @@ QSqlError LibraryModel::initDb() {
     db.setDatabaseName("AAMusicPlayer_library.db3");
     //db.setDatabaseName(":memory:"); // not persistent yet
     if (!db.open()) {
-        qDebug() << "initDb(): Can't open database!";
+        //qDebug() << "initDb(): Can't open database!";
         return db.lastError();
     }
 
@@ -85,7 +86,7 @@ QSqlError LibraryModel::initDb() {
     q.prepare("CREATE TABLE IF NOT EXISTS MUSICLIBRARY(id integer primary key, absFilePath varchar(200) UNIQUE, fileName varchar, Title varchar, Artist varchar, Album varchar, Length int)");
     if (!q.exec()) {
         // error if table creation not successfull
-        qDebug() << "Music Table creation error";
+        //qDebug() << "Music Table creation error";
         return q.lastError();
     }
     
@@ -94,7 +95,7 @@ QSqlError LibraryModel::initDb() {
 
 
 QSqlError LibraryModel::populateModel() {
-    qDebug() << "Populate the Model from database";
+    //qDebug() << "Populate the Model from database";
 
     // make root
     QSqlQuery q(db);    // query for distinct artists
@@ -102,7 +103,7 @@ QSqlError LibraryModel::populateModel() {
     QSqlQuery q3(db);   // query to delete invalid database entries
     QList<QHash<QString, QString> > validSongs;
     if (!q.exec(QString("SELECT DISTINCT Artist FROM MUSICLIBRARY ORDER BY Artist ASC"))) {
-        qDebug() << "PopulateModel(): select artist failed!";
+        //qDebug() << "PopulateModel(): select artist failed!";
         return q.lastError();
     }
     rootItem = new TreeItem(QHash<QString, QString>(), TreeItem::ROOT);
@@ -116,17 +117,17 @@ QSqlError LibraryModel::populateModel() {
         
         // find and check how many of its children are valid.
         if (!q2.exec(QString("SELECT absFilePath, Title FROM MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(Artist))) {
-            qDebug() << "PopulateModel(): Selecting SONGS with Artist=" << Artist << " failed!";
+            //qDebug() << "PopulateModel(): Selecting SONGS with Artist=" << Artist << " failed!";
             return q2.lastError();
         }
         while (q2.next()) {
             QFileInfo f(q2.value(0).toString());
             if (!f.exists()) {
                 // if it doesn't exist, remove database entry
-                qDebug() << "Want to remove item!";
+                //qDebug() << "Want to remove item!";
                 if (!q3.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'")
                                     .arg(q2.value(0).toString()))) {
-                        qDebug() << "PopulateModel(): Removing invalid DB entry with absFilePath=" << q2.value(0).toString() << " failed!";
+                        //qDebug() << "PopulateModel(): Removing invalid DB entry with absFilePath=" << q2.value(0).toString() << " failed!";
                         return q.lastError();
                 }
                 continue;
@@ -182,7 +183,7 @@ bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
     q.bindValue(":Album", album);
     q.bindValue(":Length", length);
     if (!q.exec()) {
-        qDebug() << "Error at addEntry() " <<  q.lastError();
+        //qDebug() << "Error at addEntry() " <<  q.lastError();
         return false;
     }
 
@@ -202,22 +203,22 @@ bool LibraryModel::addEntry(QSqlQuery &q, const QString &absFilePath, const QStr
 
 // Protected methods
 int LibraryModel::rowCount(const QModelIndex &parent) const {
-    //qDebug() << "In rowCount:";
-    //qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
+    ////qDebug() << "In rowCount:";
+    ////qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
     TreeItem *parentItem = getItem(parent);
     return parentItem->ChildCount();
 }
 
 int LibraryModel::columnCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    //qDebug() << "In columnCount():";
-    //qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
+    ////qDebug() << "In columnCount():";
+    ////qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
     return rootItem->columnCount();
 }
 
 QModelIndex LibraryModel::index(int row, int column, const QModelIndex &parent) const {
-    //qDebug() << "In index():";
-    //qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
+    ////qDebug() << "In index():";
+    ////qDebug() << "QModelIndex &parent is: " << parent << ", row=" << parent.row() << " col=" << parent.column();
 
     if (parent.isValid() && parent.column() != 0) {
         return QModelIndex();
@@ -234,8 +235,8 @@ QModelIndex LibraryModel::index(int row, int column, const QModelIndex &parent) 
 }
 
 QModelIndex LibraryModel::parent(const QModelIndex &index) const {
-    //qDebug() << "In parent():";
-    //qDebug() << "QModelIndex &index is: " << index << ", row=" << index.row() << " col=" << index.column();
+    ////qDebug() << "In parent():";
+    ////qDebug() << "QModelIndex &index is: " << index << ", row=" << index.row() << " col=" << index.column();
 
     if (!index.isValid()) {
         return QModelIndex();
@@ -283,15 +284,15 @@ QSqlError LibraryModel::populateFromDirs() {
 
 void LibraryModel::refreshLibrary() {
     // reconstruct the library items and sync database with folder.
-    qDebug() << "Refreshing library";
+    //qDebug() << "Refreshing library";
     
-    qDebug() << "Clearing library...";
+    //qDebug() << "Clearing library...";
     beginRemoveRows(QModelIndex(), 0, rootItem->ChildCount()-1);
     delete rootItem;
     item_counts.clear();
     endRemoveRows();
     
-    qDebug() << "Repopulating library...";
+    //qDebug() << "Repopulating library...";
     QSqlError err = populateModel(); 
     if (err.type() != QSqlError::NoError) {
         showError(err, "Populating model failed");
@@ -319,11 +320,11 @@ void LibraryModel::addFromDir(const QString & dir, bool addToImportDirs) {
             addMusicFromFile(fileInfo);
         }
     }
-    qDebug() << "Finishing importing from folder";
+    //qDebug() << "Finishing importing from folder";
 
     // add the given dir to import directory list unless specified
     if (addToImportDirs) {
-        qDebug() << "Adding new directory to CONFIG file";
+        //qDebug() << "Adding new directory to CONFIG file";
         addImportDirs(dir);
     }
 }
@@ -347,7 +348,7 @@ bool LibraryModel::addMusicFromFile(QFileInfo & fileInfo) {
     const char* cString = byteArray.constData();
     TagLib::FileRef f(cString);
     if (f.isNull()) {
-        qDebug() << "Can't read file's tags!";
+        //qDebug() << "Can't read file's tags!";
         return false;
     }
     if (!f.isNull() && f.tag()) {
@@ -402,7 +403,7 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
         endInsertRows();
         return true;
     }
-    //qDebug() << "Error@ addEntryToModel executing query: " << q.lastError();
+    ////qDebug() << "Error@ addEntryToModel executing query: " << q.lastError();
     return false;
 }
 
@@ -411,14 +412,14 @@ void LibraryModel::playlistMetaDataChange(QHash<QString, QString> newHash) {
     // delete the database entry associated with item.
     QSqlQuery q(db);
     if (!q.exec(QString("SELECT Artist, Length FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(newHash["absFilePath"]))) {
-        qDebug() << "Error SELECT Artist in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
+        //qDebug() << "Error SELECT Artist in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
         return;
     }
     q.next();
     QString oldArtist = q.value(0).toString();
     int oldLength = q.value(1).toInt();
     if (!q.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(newHash["absFilePath"]))) {
-        qDebug() << "Error DELETING old entry in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
+        //qDebug() << "Error DELETING old entry in SLOT:playlistMetaDataChange() - Executing query: " << q.lastError();
         return;
     }
     // delete the node associated with it from library
@@ -430,15 +431,15 @@ void LibraryModel::playlistMetaDataChange(QHash<QString, QString> newHash) {
             // new itme added successfully
             return;
         }
-        qDebug() << "Error in SLOT:playlistMetaDataChange() - adding new entry failed!";
+        //qDebug() << "Error in SLOT:playlistMetaDataChange() - adding new entry failed!";
     }
-    qDebug() << "Error in SLOT:playlistMetaDataChange() - removing old song node failed!";
+    //qDebug() << "Error in SLOT:playlistMetaDataChange() - removing old song node failed!";
 }
 
 bool LibraryModel::removeEntryFromModel(QString &absFilePath, QString &artist) {
     QSqlQuery q(db);
     if (!q.exec(QString("DELETE FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
-        qDebug() << "Error removeEntryFromModel() - Executing query: " << q.lastError();
+        //qDebug() << "Error removeEntryFromModel() - Executing query: " << q.lastError();
         return false;
     }
     // delete the node associated with it from library
@@ -478,10 +479,10 @@ QHash<QString, QString> LibraryModel::getSongInfo(const QModelIndex idx) const {
     // query database
     QSqlQuery q(db);
     if (!q.exec(QString("SELECT fileName, Title, Artist, Album, Length FROM MUSICLIBRARY WHERE absFilePath='%1'").arg(absFilePath))) {
-        qDebug() << "Error at getSongInfo() - Executing query: " << q.lastError();
+        //qDebug() << "Error at getSongInfo() - Executing query: " << q.lastError();
     }
     q.next();
-    //qDebug() << "Here: " << q.lastError();
+    ////qDebug() << "Here: " << q.lastError();
     hash["absFilePath"] = absFilePath;
     hash["fileName"] = q.value(0).toString();
     hash["Title"] = q.value(1).toString();
@@ -497,7 +498,7 @@ QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelInde
     // Query database to get all songs by this artist
     QSqlQuery q(db);
     if (!q.exec(QString("SELECT absFilePath, fileName, Title, Artist, Album, Length from MUSICLIBRARY WHERE Artist='%1' ORDER BY Title ASC").arg(item->data().toString()))) {
-        qDebug() << "Error at getArtistSongInfo(() - Executing query: " << q.lastError();
+        //qDebug() << "Error at getArtistSongInfo(() - Executing query: " << q.lastError();
     }
     while (q.next()) {
         QHash<QString, QString> hash;
@@ -513,7 +514,7 @@ QList<QHash<QString, QString> > LibraryModel::getArtistSongInfo(const QModelInde
 }
 
 QMimeData *LibraryModel::mimeData(const QModelIndexList &indexes) const {
-    qDebug() << "Calling libraryModel mimeData";
+    //qDebug() << "Calling libraryModel mimeData";
     QMimeData *mimeData = new QMimeData();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
@@ -541,7 +542,7 @@ QMimeData *LibraryModel::mimeData(const QModelIndexList &indexes) const {
         }
     }
     mimeData->setData("myMediaItem", encodedData);
-    qDebug() << "Called mimeData with indexes=" << indexes;
+    //qDebug() << "Called mimeData with indexes=" << indexes;
     return mimeData;
 }
 
@@ -576,7 +577,7 @@ bool LibraryModel::setData(const QModelIndex &index, const QVariant &value, int 
             // update the database entries
             QSqlQuery q(db);
             if (!q.exec(QString("UPDATE MUSICLIBRARY SET Artist='%1' WHERE Artist='%2'").arg(newArtist).arg(oldArtist))) {
-                qDebug() << "Error@setData(): Batch updating database entries artist columns failed: " << q.lastError();
+                //qDebug() << "Error@setData(): Batch updating database entries artist columns failed: " << q.lastError();
                 return false;
             }
             

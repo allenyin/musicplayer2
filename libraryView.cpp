@@ -32,8 +32,8 @@ void LibraryView::keyPressEvent(QKeyEvent *event) {
 void LibraryView::mouseDoubleClickEvent(QMouseEvent* event) {
     QPoint clickPos = event->pos();
     const QModelIndex clickIdx = QTreeView::indexAt(clickPos);
-    qDebug()<< "Double click at (" << clickPos.x() << ", " << clickPos.y() << ")";
-    qDebug()<< "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")";
+    //qDebug()<< "Double click at (" << clickPos.x() << ", " << clickPos.y() << ")";
+    //qDebug()<< "ModelIndex: (" << clickIdx.row() << ", " << clickIdx.column() << ")";
     emit(QTreeView::activated(clickIdx));
 }
 

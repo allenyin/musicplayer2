@@ -73,7 +73,7 @@ PlaylistLibraryView* Library::view_pl() const {
 // slot
 void Library::addToPlaylist(const QModelIndex idx) {
     TreeItem *item = libraryModel->getItem(idx);
-    //qDebug() << "Clicked item has data: " << item->data();
+    ////qDebug() << "Clicked item has data: " << item->data();
     if (item->getItemType() == TreeItem::SONG) {
         emit(addSongToPlaylist(libraryModel->getSongInfo(idx)));
     }

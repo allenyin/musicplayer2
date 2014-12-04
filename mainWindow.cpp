@@ -12,29 +12,32 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle(tr("AAMusicPlayer"));
     
     // set up player/playlist area
-    player = new Player();
+    player = new Player(this);
 
     // set up library
-    library = new Library();
+    library = new Library(this);
 
     // central Widget
-    centralWidget = new QWidget();
+    centralWidget = new QWidget(this);
    
     setupWidgets();
+    menubar = new QMenuBar(this);
     setupMenus();
 }
 
 MainWindow::~MainWindow() {
+    /*
     delete player;
     delete library;
     delete centralWidget;
     delete fileMenu;
-    delete menubar;
     delete exitAction;
     delete importFromFolderAction;
     delete refreshLibraryAction;
     delete aboutMenu;
     delete aboutAction;
+    */
+    delete menubar;
 }
 
 void MainWindow::setupWidgets() {
@@ -66,7 +69,6 @@ void MainWindow::setupWidgets() {
 }
 
 void MainWindow::setupMenus() {
-    menubar = new QMenuBar(this);
 
     fileMenu = menubar->addMenu(tr("&File"));
     // actions associated with fileMenu:
