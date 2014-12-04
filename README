@@ -8,7 +8,6 @@ AAMusicPlayer demonstrates all the basic functionalities of a media player (and 
 especially suitable for media-tag (Title, Artist, Album) editing.
 
 
-
 FEATURE IMPLEMENTED:
 --------------------
 
@@ -83,7 +82,7 @@ NOTE: This database-library-playlist data synchronization was not originally pla
 1) The Title Bar displays "AAMusicPlayer" by default. If there are songs present in the playlist area, it will show either the current track information (Title - Arist - Album).
 
 
-> PLAYLIST:
+> PLAYLIST-LIBRARY:
 
 1) Clicking the "plus" symbol above the playlist window will save the current selection of songs to a preferred playlist file (".m3u"). The user 
    can then click refresh library to see the newly created list in the "Playlists" area.
@@ -124,5 +123,10 @@ REQUIRED PACKAGES:
    On OSX, xcode developer tools, cmake and homebrew should be installed before. More information could be found from (taglib.github.io).
    
 3) sqlite3
+
+VALGRIND:
+----------------
+We cannot solve a slight memory leak caused by Qt's QMenubar object. This seems to be a well-known problem without an effective solution.
+Other than that, we are pretty clean.
 
 -- Make restriction to allow only one instance to run for database consistency.
