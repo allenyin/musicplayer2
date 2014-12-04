@@ -27,6 +27,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     connect(playlistModel, SIGNAL(currentIndexChanged(int)), SLOT(playlistPositionChanged(int)));
     connect(playlistModel, SIGNAL(curMediaRemoved(int)), SLOT(curMediaRemoved(int)));
     connect(playlistModel, SIGNAL(mediaAvailable()), SLOT(mediaAvailable()));
+    connect(playlistModel, SIGNAL(changePlaylistLabel(QString)), SLOT(changePlaylistLabel(QString)));
 
     // buttons for playback mode, and playlist actions
     curPlaylistLabel = new QLabel(this);
@@ -65,6 +66,7 @@ Player::Player(QWidget *parent) :QWidget(parent), coverLabel(0), slider(0) {
     clearListButton->setFixedSize(clearListButton->sizeHint());
     clearListButton->setToolTip("Clear current queue");
     connect(clearListButton, SIGNAL(clicked()), this, SLOT(clearPlaylist()));
+    connect(clearListButton, SIGNAL(clicked()), this, SLOT(changePlaylistLabel(QString())));
 
     //------------Playback UI setup------------
     slider = new QSlider(Qt::Horizontal, this);
@@ -390,6 +392,15 @@ void Player::savePlaylist() {
        }
        playlistModel->savePlaylist(fileName);
     }
+}
+
+void Player::changePlaylistLabel(QString absFilePath) {
+    if (absFilePath.isEmpty()) {
+        curPlaylistLabel->setText("Queue");
+        return;
+    }
+    QFileInfo f(absFilePath);
+    curPlaylistLabel->setText(f.baseName());
 }
 
 void Player::updateDurationInfo(qint64 currentInfo)

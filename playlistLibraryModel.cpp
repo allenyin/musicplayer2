@@ -91,7 +91,7 @@ QSqlError PlaylistLibraryModel::populateModel() {
                 qDebug() << "PlaylistLibraryModel::populateModel() failed@Remvoing invalid DB entry with absFilePath=" << q.value(0).toString();
                 return q.lastError();
             }
-            // remove corresponding model item if there exists...
+            // remove invalid model item if there exists...
             QList<QStandardItem *> invalidItems = findItems(q.value(0).toString(), Qt::MatchExactly, 1);
             if (!invalidItems.isEmpty()) {
                QStandardItem *item;
@@ -148,15 +148,18 @@ void PlaylistLibraryModel::addToModelAndDB(QFileInfo fileInfo) {
 
 void PlaylistLibraryModel::addToModelOnly(QFileInfo &fileInfo) {
     // add the playlist to model only, no database entry
-    qDebug() << "PlaylistLibraryModel::addToModelOnly()";
-    insertRow(0);
-    setData(index(0,0), fileInfo.fileName());
+    bool a = insertRow(0);
+    qDebug() << "PlaylistLibraryModel::addToModelOnly(): " << fileInfo.canonicalFilePath();
+    setData(index(0,0), fileInfo.baseName());
     setData(index(0,1), fileInfo.canonicalFilePath());
+    qDebug() << "Insert suceeded? " << a;
+    emit(playlistItemAdded());
 }
 
 void PlaylistLibraryModel::refresh() {
     qDebug() << "Refreshing PlaylistLibraryModel";
     //clear();
+    removeRows(0, rowCount());
     importDirs.clear();
     
     getImportDirs();
@@ -178,4 +181,9 @@ void PlaylistLibraryModel::showError(const QSqlError &err, const QString msg) {
     QMessageBox msgBox;
     msgBox.setText(msg + " Error with database: " + err.text());
     msgBox.exec();
+}
+
+void PlaylistLibraryModel::loadPlaylist(const QModelIndex &idx) {
+    QString absFilePath = data(index(idx.row(),1)).toString();
+    emit(loadPlaylist(absFilePath));
 }

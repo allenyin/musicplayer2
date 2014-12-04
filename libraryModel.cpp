@@ -402,7 +402,7 @@ bool LibraryModel::addEntryToModel(QString &absFilePath, QString &fileName, QStr
         endInsertRows();
         return true;
     }
-    qDebug() << "Error@ addEntryToModel executing query: " << q.lastError();
+    //qDebug() << "Error@ addEntryToModel executing query: " << q.lastError();
     return false;
 }
 

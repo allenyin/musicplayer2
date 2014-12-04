@@ -65,9 +65,11 @@ private slots:
     void changeItems(int start, int end);
     void changeMetaData(QModelIndex index);
     void libraryMetaDataChanged(int dataType, QString arg1, QString arg2);
+    void loadPlaylistItem(QString absFilePath);
 
 signals:
-   void playlistFileOpened(QFileInfo fileInfo);
+   void changePlaylistLabel(QString);
+   void playlistFileOpened(QFileInfo);
    void mediaAddedToPlaylist(QString);
    void mediaAvailable();
    void playlistMetaDataChange(QHash<QString, QString>);  // should be caught by library to update database.

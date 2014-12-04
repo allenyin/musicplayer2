@@ -58,6 +58,8 @@ void MainWindow::setupWidgets() {
     connect(player->model(), SIGNAL(playlistMetaDataChange(QHash<QString, QString>)), library->model(), SLOT(playlistMetaDataChange(QHash<QString,QString>)));
     connect(library->model(), SIGNAL(libraryMetaDataChanged(int, QString, QString)), player->model(), SLOT(libraryMetaDataChanged(int, QString, QString)));
     connect(player->model(), SIGNAL(playlistFileOpened(QFileInfo)), library->model_pl(), SLOT(addToModelAndDB(QFileInfo)));
+
+    connect(library->model_pl(), SIGNAL(loadPlaylist(QString)), player->model(), SLOT(loadPlaylistItem(QString)));
 }
 
 void MainWindow::setupMenus() {

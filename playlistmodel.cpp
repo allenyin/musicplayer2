@@ -1,4 +1,5 @@
 #include "playlistmodel.h"
+#include <assert.h>
 #include <QColor>
 #include <QBrush>
 #include <QMimeData>
@@ -442,6 +443,20 @@ void PlaylistModel::clear() {
     m_data.clear();
     endRemoveRows();
     curMediaIdx = -1;
+}
+
+void PlaylistModel::loadPlaylistItem(QString absFilePath) {
+    // load the playlist item described by absFilePath;
+    clear();
+    QFile pFile(absFilePath);
+    assert(pFile.open(QIODevice::ReadOnly | QIODevice::Text));
+    QTextStream in(&pFile);
+    QStringList fileNames;
+    while (!in.atEnd()) {
+        fileNames << in.readLine();
+    }
+    addMedia(fileNames);
+    emit(changePlaylistLabel(absFilePath));
 }
 
 const QString PlaylistModel::getCurAlbumArtist() const {

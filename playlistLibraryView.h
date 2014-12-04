@@ -1,9 +1,11 @@
 #pragma once
 #include "plSortFilterProxyModel.h"
+#include "playlistLibraryModel.h"
 #include <QTableView>
 #include <QMouseEvent>
 
 class PLSortFilterProxyModel;
+class PlaylistLibraryModel;
 
 class PlaylistLibraryView : public QTableView {
     Q_OBJECT
@@ -25,10 +27,12 @@ protected:
 
 signals:
 
+
 public slots:
 
 private:
     PLSortFilterProxyModel *proxyModel;
+    PlaylistLibraryModel *myModel;
 
 
 };

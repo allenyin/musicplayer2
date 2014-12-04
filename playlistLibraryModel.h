@@ -10,6 +10,7 @@ public:
     PlaylistLibraryModel(QWidget *parent = 0);
     ~PlaylistLibraryModel();
     void addFromDir(const QString &dir); 
+    void loadPlaylist(const QModelIndex &idx); 
 
 protected:
 
@@ -18,8 +19,9 @@ private slots:
     void addToModelAndDB(QFileInfo fileInfo);
     void refresh();
 
-
 signals:
+    void playlistItemAdded();   // connect to proxymodel for sorting
+    void loadPlaylist(QString);
 
 private:
     void getImportDirs();

@@ -73,8 +73,9 @@ private slots:
 
     void displayErrorMessage();
 
-    // playlist saving
+    // playlist management
     void savePlaylist();
+    void changePlaylistLabel(QString absFilePath);
 
 private:
     void setTrackInfo(const QString &info);

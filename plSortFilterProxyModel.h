@@ -7,8 +7,11 @@ class PLSortFilterProxyModel : public QSortFilterProxyModel {
 public:
     PLSortFilterProxyModel(QObject *parent = 0);
 
+private slots:
+    void sortItems();
+
 protected:
-    //bool filterAcceptRow(int sourceRow, const QModelIndex &sourceParent) const;
     bool filterAcceptsColumn(int sourceColumn, const QModelIndex &sourceParent) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
 };

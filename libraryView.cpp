@@ -15,6 +15,9 @@ LibraryView::LibraryView(QWidget *parent) : QTreeView(parent) {
     // enable drag and drop
     setDragEnabled(true);
     setAcceptDrops(false);
+
+    // cosmetics
+    setAlternatingRowColors(true);
 }
 
 LibraryView::~LibraryView() {
